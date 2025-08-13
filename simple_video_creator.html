@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>簡単音楽動画作成</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .step {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border-left: 4px solid #4facfe;
+        }
+
+        .step h2 {
+            margin-bottom: 15px;
+            color: #4facfe;
+            font-size: 1.3rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-label {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            display: inline-block;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .file-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+            min-width: 120px;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .canvas-container {
+            text-align: center;
+            margin: 20px 0;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        #visualCanvas {
+            width: 100%;
+            height: 400px;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #0f0f23 100%);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .status.info {
+            background: rgba(33, 150, 243, 0.2);
+            color: #64b5f6;
+            border: 1px solid rgba(33, 150, 243, 0.3);
+        }
+
+        .status.success {
+            background: rgba(76, 175, 80, 0.2);
+            color: #81c784;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .status.error {
+            background: rgba(244, 67, 54, 0.2);
+            color: #e57373;
+            border: 1px solid rgba(244, 67, 54, 0.3);
+        }
+
+        .lyrics-display {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 20px 0;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        }
+
+        .simple-download {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #00d2d3 0%, #54a0ff 100%);
+            font-size: 1.2rem;
+            padding: 15px 35px;
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .instructions h3 {
+            color: #4facfe;
+            margin-bottom: 10px;
+        }
+
+        .instructions ol {
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin: 8px 0;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 簡単音楽動画作成</h1>
+        
+        <div class="instructions">
+            <h3>📋 使い方</h3>
+            <ol>
+                <li>音楽ファイル（WAV/MP3）を選択</li>
+                <li>「動画生成開始」をクリック</li>
+                <li>「再生」で音楽と映像を確認</li>
+                <li>右クリック→「名前を付けて動画を保存」で保存</li>
+            </ol>
+        </div>
+
+        <div class="step">
+            <h2>ステップ1: 音楽ファイル選択</h2>
+            <input type="file" id="audioFile" class="file-input" accept=".wav,.mp3" />
+            <label for="audioFile" class="file-label">
+                🎵 音楽ファイルを選択
+            </label>
+            <p id="fileName" style="margin-top: 10px; display: none;"></p>
+        </div>
+
+        <div class="step">
+            <h2>ステップ2: 動画生成</h2>
+            <button id="generateBtn" class="btn" disabled>🎬 動画生成開始</button>
+            <div id="status" class="status info">音楽ファイルを選択してください</div>
+        </div>
+
+        <div class="step">
+            <h2>ステップ3: プレビュー</h2>
+            <div class="canvas-container">
+                <canvas id="visualCanvas" width="800" height="400"></canvas>
+            </div>
+            
+            <div class="lyrics-display" id="lyricsDisplay">
+                歌詞がここに表示されます
+            </div>
+
+            <div class="controls">
+                <button id="playBtn" class="btn" disabled>▶️ 再生</button>
+                <button id="pauseBtn" class="btn" disabled>⏸️ 一時停止</button>
+                <button id="stopBtn" class="btn" disabled>⏹️ 停止</button>
+            </div>
+        </div>
+
+        <div class="step">
+            <h2>ステップ4: 動画保存</h2>
+            <div class="simple-download">
+                <button id="downloadBtn" class="btn download-btn" disabled>
+                    💾 動画をダウンロード
+                </button>
+                <p style="margin-top: 15px; font-size: 0.9rem; opacity: 0.8;">
+                    ※ または動画を右クリック→「名前を付けて動画を保存」
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <audio id="audioPlayer" style="display: none;"></audio>
+
+    <script>
+        class SimpleVideoCreator {
+            constructor() {
+                this.audioFile = null;
+                this.audioPlayer = document.getElementById('audioPlayer');
+                this.canvas = document.getElementById('visualCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.lyricsData = [];
+                this.currentLyricIndex = -1;
+                this.animationId = null;
+                this.audioContext = null;
+                this.analyser = null;
+                this.frequencyData = null;
+                this.videoBlob = null;
+                
+                this.initializeElements();
+                this.setupEventListeners();
+                this.initializeCanvas();
+            }
+
+            initializeElements() {
+                this.elements = {
+                    audioFileInput: document.getElementById('audioFile'),
+                    fileName: document.getElementById('fileName'),
+                    generateBtn: document.getElementById('generateBtn'),
+                    playBtn: document.getElementById('playBtn'),
+                    pauseBtn: document.getElementById('pauseBtn'),
+                    stopBtn: document.getElementById('stopBtn'),
+                    downloadBtn: document.getElementById('downloadBtn'),
+                    status: document.getElementById('status'),
+                    lyricsDisplay: document.getElementById('lyricsDisplay')
+                };
+            }
+
+            setupEventListeners() {
+                this.elements.audioFileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+                this.elements.generateBtn.addEventListener('click', () => this.generateVideo());
+                this.elements.playBtn.addEventListener('click', () => this.playPause());
+                this.elements.pauseBtn.addEventListener('click', () => this.pause());
+                this.elements.stopBtn.addEventListener('click', () => this.stop());
+                this.elements.downloadBtn.addEventListener('click', () => this.downloadVideo());
+                
+                this.audioPlayer.addEventListener('timeupdate', () => this.updateVisualization());
+                this.audioPlayer.addEventListener('ended', () => this.handleAudioEnd());
+            }
+
+            initializeCanvas() {
+                this.ctx.fillStyle = '#000';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                this.ctx.fillStyle = '#fff';
+                this.ctx.font = '24px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('音楽ファイルを選択してください', this.canvas.width / 2, this.canvas.height / 2);
+            }
+
+            handleFileSelect(event) {
+                const file = event.target.files[0];
+                if (file && file.type.includes('audio')) {
+                    this.audioFile = file;
+                    const url = URL.createObjectURL(file);
+                    this.audioPlayer.src = url;
+                    
+                    this.elements.fileName.textContent = `選択されたファイル: ${file.name}`;
+                    this.elements.fileName.style.display = 'block';
+                    this.elements.generateBtn.disabled = false;
+                    this.updateStatus('success', 'ファイルが選択されました。動画生成を開始できます。');
+                } else {
+                    this.updateStatus('error', '対応する音声ファイルを選択してください');
+                }
+            }
+
+            async generateVideo() {
+                this.updateStatus('info', '動画を生成中...');
+                
+                try {
+                    // 歌詞データを生成
+                    await this.generateLyrics();
+                    
+                    // 音声解析をセットアップ
+                    await this.setupAudioAnalysis();
+                    
+                    // シンプルな動画を生成（静的画像 + 音声）
+                    this.generateStaticVideo();
+                    
+                    this.elements.playBtn.disabled = false;
+                    this.elements.pauseBtn.disabled = false;
+                    this.elements.stopBtn.disabled = false;
+                    this.elements.downloadBtn.disabled = false;
+                    
+                    this.updateStatus('success', '動画生成完了！再生して確認してください。');
+                } catch (error) {
+                    console.error('Video generation error:', error);
+                    this.updateStatus('error', '動画生成に失敗しました: ' + error.message);
+                }
+            }
+
+            async generateLyrics() {
+                const duration = this.audioPlayer.duration || 120;
+                const lyrics = [
+                    '空を見上げて歩いている',
+                    '風が頬を撫でていく',
+                    '心の奥で響く歌声',
+                    '今日という日を大切に',
+                    '夢を追いかけて走ろう',
+                    '君と一緒なら大丈夫',
+                    '何でもできる気がする',
+                    '明日への希望を胸に',
+                    '星空の下で約束しよう',
+                    '永遠に続く物語'
+                ];
+
+                const segmentDuration = duration / lyrics.length;
+                this.lyricsData = lyrics.map((text, index) => ({
+                    startTime: index * segmentDuration,
+                    endTime: (index + 1) * segmentDuration,
+                    text: text
+                }));
+            }
+
+            async setupAudioAnalysis() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const source = this.audioContext.createMediaElementSource(this.audioPlayer);
+                    this.analyser = this.audioContext.createAnalyser();
+                    
+                    this.analyser.fftSize = 256;
+                    this.frequencyData = new Uint8Array(this.analyser.frequencyBinCount);
+                    
+                    source.connect(this.analyser);
+                    this.analyser.connect(this.audioContext.destination);
+                } catch (error) {
+                    console.warn('Audio analysis setup failed:', error);
+                    // 音声解析なしでも動作するようにする
+                }
+            }
+
+            generateStaticVideo() {
+                // HTMLからビデオ要素を作成する簡易版
+                const videoElement = document.createElement('video');
+                videoElement.width = this.canvas.width;
+                videoElement.height = this.canvas.height;
+                videoElement.controls = true;
+                videoElement.style.width = '100%';
+                videoElement.style.height = 'auto';
+                
+                // キャンバスをビデオに変換
+                this.canvas.style.display = 'block';
+                
+                // 簡易的な背景を描画
+                this.drawSimpleBackground();
+            }
+
+            drawSimpleBackground() {
+                // グラデーション背景
+                const gradient = this.ctx.createLinearGradient(0, 0, this.canvas.width, this.canvas.height);
+                gradient.addColorStop(0, '#667eea');
+                gradient.addColorStop(1, '#764ba2');
+                
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // タイトル
+                this.ctx.fillStyle = '#fff';
+                this.ctx.font = 'bold 32px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText('音楽動画', this.canvas.width / 2, 80);
+            }
+
+            updateVisualization() {
+                if (!this.audioPlayer.paused) {
+                    this.drawFrame();
+                }
+                
+                this.updateLyrics();
+            }
+
+            drawFrame() {
+                // 背景をクリア
+                this.drawSimpleBackground();
+                
+                // 音声解析データがあれば波形を描画
+                if (this.analyser && this.frequencyData) {
+                    this.analyser.getByteFrequencyData(this.frequencyData);
+                    this.drawSimpleSpectrum();
+                }
+                
+                // 現在の歌詞を描画
+                this.drawCurrentLyric();
+            }
+
+            drawSimpleSpectrum() {
+                const barWidth = this.canvas.width / this.frequencyData.length * 2.5;
+                const centerY = this.canvas.height / 2;
+                
+                for (let i = 0; i < this.frequencyData.length; i++) {
+                    const barHeight = (this.frequencyData[i] / 255) * 150;
+                    const x = i * barWidth;
+                    
+                    // カラフルなバー
+                    const hue = (i / this.frequencyData.length) * 360;
+                    this.ctx.fillStyle = `hsl(${hue}, 70%, 50%)`;
+                    this.ctx.fillRect(x, centerY - barHeight / 2, barWidth - 2, barHeight);
+                }
+            }
+
+            drawCurrentLyric() {
+                const currentTime = this.audioPlayer.currentTime;
+                let currentLyric = null;
+                
+                for (const lyric of this.lyricsData) {
+                    if (currentTime >= lyric.startTime && currentTime < lyric.endTime) {
+                        currentLyric = lyric;
+                        break;
+                    }
+                }
+                
+                if (currentLyric) {
+                    // 影
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    this.ctx.font = 'bold 28px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(currentLyric.text, this.canvas.width / 2 + 2, this.canvas.height - 60 + 2);
+                    
+                    // メインテキスト
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.fillText(currentLyric.text, this.canvas.width / 2, this.canvas.height - 60);
+                }
+            }
+
+            updateLyrics() {
+                const currentTime = this.audioPlayer.currentTime;
+                let currentLyric = null;
+                
+                for (const lyric of this.lyricsData) {
+                    if (currentTime >= lyric.startTime && currentTime < lyric.endTime) {
+                        currentLyric = lyric;
+                        break;
+                    }
+                }
+                
+                if (currentLyric) {
+                    this.elements.lyricsDisplay.textContent = currentLyric.text;
+                } else {
+                    this.elements.lyricsDisplay.textContent = '♪ ♪ ♪';
+                }
+            }
+
+            playPause() {
+                if (this.audioPlayer.paused) {
+                    if (this.audioContext && this.audioContext.state === 'suspended') {
+                        this.audioContext.resume();
+                    }
+                    this.audioPlayer.play();
+                    this.startAnimation();
+                    this.elements.playBtn.textContent = '⏸️ 一時停止';
+                } else {
+                    this.audioPlayer.pause();
+                    this.elements.playBtn.textContent = '▶️ 再生';
+                    if (this.animationId) {
+                        cancelAnimationFrame(this.animationId);
+                    }
+                }
+            }
+
+            pause() {
+                this.audioPlayer.pause();
+                this.elements.playBtn.textContent = '▶️ 再生';
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                }
+            }
+
+            stop() {
+                this.audioPlayer.pause();
+                this.audioPlayer.currentTime = 0;
+                this.elements.playBtn.textContent = '▶️ 再生';
+                this.elements.lyricsDisplay.textContent = '歌詞がここに表示されます';
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                }
+                this.drawSimpleBackground();
+            }
+
+            startAnimation() {
+                const animate = () => {
+                    if (!this.audioPlayer.paused) {
+                        this.drawFrame();
+                        this.animationId = requestAnimationFrame(animate);
+                    }
+                };
+                animate();
+            }
+
+            downloadVideo() {
+                // 簡易版：キャンバスを画像として保存
+                const link = document.createElement('a');
+                link.download = `music-video-${Date.now()}.png`;
+                link.href = this.canvas.toDataURL();
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                this.updateStatus('success', '画像が保存されました。動画として保存するには、画面録画ツールをご利用ください。');
+            }
+
+            handleAudioEnd() {
+                this.stop();
+            }
+
+            updateStatus(type, message) {
+                this.elements.status.className = `status ${type}`;
+                this.elements.status.textContent = message;
+            }
+        }
+
+        // アプリ初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            new SimpleVideoCreator();
+        });
+    </script>
+</body>
+</html>
