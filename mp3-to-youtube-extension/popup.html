@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MP3 to YouTube Video Converter</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <div class="icon">🎵</div>
+                <h1>MP3 to Video</h1>
+            </div>
+            <p class="subtitle">YouTube用動画を簡単作成</p>
+        </div>
+
+        <div class="main-content">
+            <!-- ステップ1: ファイル選択 -->
+            <div class="step-section" id="step1">
+                <div class="step-header">
+                    <span class="step-number">1</span>
+                    <h3>MP3ファイル選択</h3>
+                </div>
+                <div class="file-upload">
+                    <input type="file" id="audioFile" accept=".mp3,.wav,.m4a" multiple>
+                    <label for="audioFile" class="upload-area">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">
+                            <p><strong>ファイルを選択またはドロップ</strong></p>
+                            <p>MP3, WAV, M4A対応</p>
+                        </div>
+                    </label>
+                </div>
+                <div id="fileList" class="file-list"></div>
+            </div>
+
+            <!-- ステップ2: 動画設定 -->
+            <div class="step-section" id="step2" style="display: none;">
+                <div class="step-header">
+                    <span class="step-number">2</span>
+                    <h3>動画設定</h3>
+                </div>
+                
+                <div class="settings-grid">
+                    <div class="setting-item">
+                        <label for="videoQuality">動画品質</label>
+                        <select id="videoQuality">
+                            <option value="1080p">1080p (Full HD)</option>
+                            <option value="720p" selected>720p (HD)</option>
+                            <option value="480p">480p (SD)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label for="visualStyle">ビジュアルスタイル</label>
+                        <select id="visualStyle">
+                            <option value="spectrum">スペクトラム</option>
+                            <option value="waveform">波形</option>
+                            <option value="particles">パーティクル</option>
+                            <option value="abstract">抽象アート</option>
+                            <option value="minimal">ミニマル</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label for="colorTheme">カラーテーマ</label>
+                        <select id="colorTheme">
+                            <option value="vibrant">ビビッド</option>
+                            <option value="neon">ネオン</option>
+                            <option value="pastel">パステル</option>
+                            <option value="monochrome">モノクローム</option>
+                            <option value="sunset">サンセット</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label for="backgroundColor">背景色</label>
+                        <input type="color" id="backgroundColor" value="#000000">
+                    </div>
+                </div>
+
+                <div class="text-settings">
+                    <h4>タイトル・テキスト設定</h4>
+                    <div class="input-group">
+                        <label for="videoTitle">動画タイトル</label>
+                        <input type="text" id="videoTitle" placeholder="楽曲名を入力...">
+                    </div>
+                    <div class="input-group">
+                        <label for="artistName">アーティスト名</label>
+                        <input type="text" id="artistName" placeholder="アーティスト名を入力...">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ステップ3: プレビュー -->
+            <div class="step-section" id="step3" style="display: none;">
+                <div class="step-header">
+                    <span class="step-number">3</span>
+                    <h3>プレビュー</h3>
+                </div>
+                
+                <div class="preview-container">
+                    <canvas id="previewCanvas" width="640" height="360"></canvas>
+                    <div class="preview-controls">
+                        <button id="previewPlay" class="btn-secondary">▶️ プレビュー再生</button>
+                        <button id="previewStop" class="btn-secondary">⏹️ 停止</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ステップ4: 変換・ダウンロード -->
+            <div class="step-section" id="step4" style="display: none;">
+                <div class="step-header">
+                    <span class="step-number">4</span>
+                    <h3>動画変換</h3>
+                </div>
+                
+                <div class="conversion-status">
+                    <div id="progressContainer" class="progress-container" style="display: none;">
+                        <div class="progress-bar">
+                            <div id="progressFill" class="progress-fill"></div>
+                        </div>
+                        <div id="progressText" class="progress-text">0%</div>
+                    </div>
+                    
+                    <div id="statusMessage" class="status-message">
+                        変換準備完了
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="convertBtn" class="btn-primary">
+                        🎬 動画に変換
+                    </button>
+                    <button id="downloadBtn" class="btn-success" style="display: none;">
+                        💾 動画をダウンロード
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ナビゲーション -->
+        <div class="navigation">
+            <button id="prevBtn" class="nav-btn" disabled>← 戻る</button>
+            <button id="nextBtn" class="nav-btn" disabled>次へ →</button>
+        </div>
+
+        <!-- フッター -->
+        <div class="footer">
+            <div class="tips">
+                💡 <strong>Tips:</strong> YouTubeアップロード時は1080p以上を推奨
+            </div>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
