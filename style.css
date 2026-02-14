@@ -719,6 +719,16 @@ img {
     margin-left: 4px;
 }
 
+.plan-duration {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-light);
+    margin-right: 8px;
+    background: var(--bg-light);
+    padding: 2px 10px;
+    border-radius: 4px;
+}
+
 .form-error {
     background: #fef2f2;
     border: 1px solid #fecaca;
@@ -1132,13 +1142,246 @@ img {
         margin-right: auto;
     }
 
-    .hero-buttons {
-        flex-direction: column;
-        align-items: center;
-    }
-
     .hero-buttons .btn {
         width: 100%;
         max-width: 280px;
+    }
+}
+
+/* ============================================
+   トップへ戻るボタン
+   ============================================ */
+.back-to-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 48px;
+    height: 48px;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s var(--ease);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.back-to-top.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.back-to-top:hover {
+    background: var(--primary-dark);
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.back-to-top svg {
+    width: 24px;
+    height: 24px;
+    stroke-width: 2.5;
+}
+
+/* ============================================
+   拡張サービス一覧（ビジョン内）
+   ============================================ */
+.expanded-services {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin: 48px 0;
+}
+
+.service-detail-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    transition: all 0.3s var(--ease);
+    text-align: left;
+}
+
+.service-detail-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.service-detail-icon {
+    font-size: 2.5rem;
+    margin-bottom: 24px;
+}
+
+.service-detail-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #fff;
+    line-height: 1.4;
+}
+
+.service-detail-text {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 24px;
+}
+
+.service-detail-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.service-detail-list li {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.6);
+    position: relative;
+    padding-left: 20px;
+}
+
+.service-detail-list li::before {
+    content: '○';
+    position: absolute;
+    left: 0;
+    color: var(--primary-light);
+    font-size: 0.75rem;
+}
+
+.vision-closing {
+    text-align: center;
+    font-size: 1.1rem;
+    line-height: 2;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 768px) {
+    .expanded-services {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .service-detail-card {
+        padding: 32px 24px;
+    }
+}
+
+
+/* ============================================
+   お問い合わせフォーム
+   ============================================ */
+.contact-wrap {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.contact-form {
+    background: var(--bg);
+    padding: 40px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+}
+
+.form-group {
+    margin-bottom: 24px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text);
+}
+
+.form-group label .required {
+    font-size: 0.75rem;
+    color: #ef4444;
+    background: #fef2f2;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 8px;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    font-family: inherit;
+    font-size: 1rem;
+    transition: all 0.3s var(--ease);
+    background: var(--bg-light);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: #fff;
+    box-shadow: 0 0 0 4px var(--primary-subtle);
+}
+
+.form-status {
+    margin-bottom: 24px;
+    display: none;
+}
+
+.form-status.success {
+    display: block;
+    padding: 16px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #16a34a;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.form-status.error {
+    display: block;
+    padding: 16px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.btn-text.loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-text.loading::after {
+    content: '';
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 768px) {
+    .contact-form {
+        padding: 24px;
     }
 }

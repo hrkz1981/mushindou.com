@@ -82,6 +82,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
     fadeElements.forEach(el => fadeObserver.observe(el));
 
-    /* ---------- お問い合わせフォーム ---------- */
-    // Googleフォームへのリンクに変更したため、送信処理は不要となりました。
+    /* ---------- お問い合わせフォーム（AJAX） ---------- */
+    const contactForm = document.getElementById('contactForm');
+    const formStatus = document.getElementById('formStatus');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = submitBtn.querySelector('.btn-text');
+
+    if (contactForm) {
+        contactForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // 状態のリセット
+            formStatus.style.display = 'none';
+            formStatus.className = 'form-status';
+            submitBtn.disabled = true;
+            btnText.classList.add('loading');
+            btnText.textContent = '送信中...';
+
+            const formData = new FormData(contactForm);
+
+            try {
+                const response = await fetch('contact.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    formStatus.textContent = result.message;
+                    formStatus.classList.add('success');
+                    contactForm.reset();
+                } else {
+                    formStatus.textContent = result.message;
+                    formStatus.classList.add('error');
+                }
+            } catch (error) {
+                formStatus.textContent = '通信エラーが発生しました。時間を置いて再度お試しください。';
+                formStatus.classList.add('error');
+                console.error('Submission error:', error);
+            } finally {
+                formStatus.style.display = 'block';
+                submitBtn.disabled = false;
+                btnText.classList.remove('loading');
+                btnText.textContent = 'この内容で送信する';
+            }
+        });
+    }
 });
