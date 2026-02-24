@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instagram投稿クリエイター</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic', sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    header {
+      background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    header h1 { font-size: 20px; font-weight: 700; }
+    header span { font-size: 24px; }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 0;
+      min-height: calc(100vh - 60px);
+    }
+
+    /* ===== Left Panel: Canvas Editor ===== */
+    .canvas-panel {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .canvas-toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: #833ab4; color: white; }
+    .btn-primary:hover { background: #6a2d94; }
+    .btn-secondary { background: white; color: #555; border: 1px solid #ddd; }
+    .btn-secondary:hover { background: #f0f0f0; }
+    .btn-danger { background: #ff4757; color: white; }
+    .btn-danger:hover { background: #e0364a; }
+    .btn-success { background: #2ed573; color: white; }
+    .btn-success:hover { background: #1eba5f; }
+    .btn-icon { padding: 8px 12px; font-size: 16px; }
+
+    .canvas-wrapper {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    #mainCanvas {
+      display: block;
+      max-width: 100%;
+      cursor: default;
+    }
+
+    .upload-placeholder {
+      width: 600px;
+      height: 600px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      color: #999;
+      border: 3px dashed #ddd;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .upload-placeholder:hover { border-color: #833ab4; color: #833ab4; }
+    .upload-placeholder .upload-icon { font-size: 64px; }
+    .upload-placeholder p { font-size: 16px; }
+    .upload-placeholder small { font-size: 12px; color: #bbb; }
+
+    /* Text control bar */
+    .text-controls {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: none;
+    }
+    .text-controls.visible { display: block; }
+    .text-controls h3 { font-size: 14px; margin-bottom: 12px; color: #555; }
+
+    .control-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .control-row label { font-size: 12px; color: #888; min-width: 60px; }
+
+    .control-row input[type="color"] {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      padding: 2px;
+    }
+    .control-row input[type="range"] {
+      width: 120px;
+      accent-color: #833ab4;
+    }
+    .control-row select {
+      padding: 6px 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .control-row input[type="text"] {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    /* Templates */
+    .templates-bar {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .templates-bar h3 { font-size: 14px; margin-bottom: 12px; color: #555; }
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 8px;
+    }
+    .template-btn {
+      padding: 10px 8px;
+      border: 2px solid #eee;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 11px;
+      text-align: center;
+      background: white;
+      transition: all 0.2s;
+      line-height: 1.4;
+    }
+    .template-btn:hover { border-color: #833ab4; color: #833ab4; }
+    .template-btn .t-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+
+    /* ===== Right Panel: Caption Generator ===== */
+    .caption-panel {
+      background: white;
+      border-left: 1px solid #eee;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .panel-section {
+      padding: 20px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .panel-section h2 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .form-group { margin-bottom: 12px; }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus { border-color: #833ab4; }
+
+    .api-key-row {
+      display: flex;
+      gap: 8px;
+    }
+    .api-key-row input { flex: 1; }
+
+    .tone-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .tone-chip {
+      padding: 5px 12px;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: white;
+    }
+    .tone-chip.active {
+      background: #833ab4;
+      color: white;
+      border-color: #833ab4;
+    }
+
+    /* Generated Captions */
+    .caption-results { padding: 20px; }
+    .caption-results h2 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: #333;
+    }
+
+    .caption-card {
+      background: #f8f8f8;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 12px;
+      position: relative;
+      transition: all 0.2s;
+    }
+    .caption-card:hover { border-color: #833ab4; }
+
+    .caption-card .caption-number {
+      font-size: 11px;
+      color: #aaa;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .caption-card .caption-text {
+      font-size: 13px;
+      line-height: 1.7;
+      color: #333;
+      white-space: pre-wrap;
+    }
+    .caption-card .hashtags {
+      font-size: 12px;
+      color: #833ab4;
+      margin-top: 8px;
+      line-height: 1.6;
+    }
+    .caption-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .caption-actions .btn {
+      padding: 5px 12px;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+
+    /* Loading */
+    .loading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 20px;
+      color: #888;
+      font-size: 14px;
+    }
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #eee;
+      border-top-color: #833ab4;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Selected text indicator */
+    .selected-indicator {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #833ab4;
+      color: white;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    /* Copied toast */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #333;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+      transition: transform 0.3s ease;
+      z-index: 9999;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* Tab bar */
+    .tab-bar {
+      display: flex;
+      border-bottom: 1px solid #eee;
+    }
+    .tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      font-size: 13px;
+      cursor: pointer;
+      color: #999;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab.active { color: #833ab4; border-bottom-color: #833ab4; font-weight: 600; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    input[type="file"] { display: none; }
+
+    .color-presets {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .color-preset {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .color-preset:hover { transform: scale(1.2); }
+    .color-preset.active { border-color: #333; }
+
+    .font-size-display {
+      min-width: 32px;
+      text-align: center;
+      font-size: 13px;
+      color: #555;
+    }
+
+    /* Shadow controls */
+    .shadow-row { display: flex; align-items: center; gap: 8px; }
+    .shadow-row input[type="checkbox"] { accent-color: #833ab4; }
+
+    .stroke-row { display: flex; align-items: center; gap: 8px; }
+
+    /* Canvas overlay for selected element */
+    .canvas-selected-outline { outline: 2px dashed #833ab4; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span>📸</span>
+  <h1>Instagram投稿クリエイター</h1>
+</header>
+
+<div class="container">
+  <!-- Left: Canvas Editor -->
+  <div class="canvas-panel">
+    <div class="canvas-toolbar">
+      <button class="btn btn-primary" onclick="document.getElementById('imageInput').click()">📂 画像を開く</button>
+      <input type="file" id="imageInput" accept="image/*" onchange="loadImage(event)">
+      <button class="btn btn-secondary btn-icon" onclick="addTextBox()" title="テキストを追加">➕ テキスト追加</button>
+      <button class="btn btn-secondary btn-icon" onclick="deleteSelected()" title="削除">🗑️ 削除</button>
+      <button class="btn btn-secondary" onclick="clearAll()">🔄 リセット</button>
+      <button class="btn btn-success" onclick="downloadImage()" style="margin-left: auto;">⬇️ ダウンロード</button>
+    </div>
+
+    <div class="canvas-wrapper" id="canvasWrapper">
+      <div class="upload-placeholder" id="uploadPlaceholder" onclick="document.getElementById('imageInput').click()"
+           ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+        <div class="upload-icon">🖼️</div>
+        <p>画像をクリックまたはドロップ</p>
+        <small>JPG / PNG / WebP 対応</small>
+      </div>
+      <canvas id="mainCanvas" style="display:none;"></canvas>
+    </div>
+
+    <!-- Text controls (shown when text element selected) -->
+    <div class="text-controls" id="textControls">
+      <h3>✏️ テキスト設定</h3>
+      <div class="control-row">
+        <label>テキスト</label>
+        <input type="text" id="ctrlText" placeholder="テキストを入力" oninput="updateSelectedText()">
+      </div>
+      <div class="control-row">
+        <label>フォント</label>
+        <select id="ctrlFont" onchange="updateSelectedText()">
+          <option value="'Noto Sans JP', sans-serif">Noto Sans JP</option>
+          <option value="'M PLUS Rounded 1c', sans-serif">M PLUS Rounded</option>
+          <option value="Impact, sans-serif">Impact</option>
+          <option value="Georgia, serif">Georgia</option>
+          <option value="'Arial Black', sans-serif">Arial Black</option>
+        </select>
+        <label>サイズ</label>
+        <input type="range" id="ctrlSize" min="12" max="120" value="40" oninput="updateSelectedText()">
+        <span class="font-size-display" id="sizeDisplay">40</span>
+      </div>
+      <div class="control-row">
+        <label>文字色</label>
+        <input type="color" id="ctrlColor" value="#ffffff" oninput="updateSelectedText()">
+        <div class="color-presets">
+          <div class="color-preset active" style="background:#ffffff" onclick="setColor('#ffffff')"></div>
+          <div class="color-preset" style="background:#000000" onclick="setColor('#000000')"></div>
+          <div class="color-preset" style="background:#fcb045" onclick="setColor('#fcb045')"></div>
+          <div class="color-preset" style="background:#fd1d1d" onclick="setColor('#fd1d1d')"></div>
+          <div class="color-preset" style="background:#833ab4" onclick="setColor('#833ab4')"></div>
+          <div class="color-preset" style="background:#2ed573" onclick="setColor('#2ed573')"></div>
+        </div>
+      </div>
+      <div class="control-row">
+        <label>配置</label>
+        <button class="btn btn-secondary btn-icon" onclick="setAlign('left')">⬅</button>
+        <button class="btn btn-secondary btn-icon" onclick="setAlign('center')">↔</button>
+        <button class="btn btn-secondary btn-icon" onclick="setAlign('right')">➡</button>
+        <label style="margin-left:10px">太字</label>
+        <input type="checkbox" id="ctrlBold" onchange="updateSelectedText()" style="accent-color: #833ab4;">
+      </div>
+      <div class="control-row shadow-row">
+        <label>影</label>
+        <input type="checkbox" id="ctrlShadow" onchange="updateSelectedText()" checked>
+        <span style="font-size:12px;color:#888">テキストに影をつける</span>
+        <label style="margin-left:10px">背景</label>
+        <input type="checkbox" id="ctrlBg" onchange="updateSelectedText()">
+        <input type="color" id="ctrlBgColor" value="#000000" oninput="updateSelectedText()">
+      </div>
+    </div>
+
+    <!-- Templates bar -->
+    <div class="templates-bar">
+      <h3>📐 テンプレートレイアウト</h3>
+      <div class="template-grid">
+        <div class="template-btn" onclick="applyTemplate('title_center')">
+          <span class="t-icon">🎯</span>中央タイトル
+        </div>
+        <div class="template-btn" onclick="applyTemplate('title_top')">
+          <span class="t-icon">⬆️</span>上部タイトル
+        </div>
+        <div class="template-btn" onclick="applyTemplate('title_bottom')">
+          <span class="t-icon">⬇️</span>下部タイトル
+        </div>
+        <div class="template-btn" onclick="applyTemplate('title_sub')">
+          <span class="t-icon">📝</span>タイトル+サブ
+        </div>
+        <div class="template-btn" onclick="applyTemplate('overlay_full')">
+          <span class="t-icon">🌆</span>全面オーバーレイ
+        </div>
+        <div class="template-btn" onclick="applyTemplate('quote')">
+          <span class="t-icon">💬</span>引用スタイル
+        </div>
+        <div class="template-btn" onclick="applyTemplate('product')">
+          <span class="t-icon">🛍️</span>商品紹介
+        </div>
+        <div class="template-btn" onclick="applyTemplate('announcement')">
+          <span class="t-icon">📣</span>お知らせ
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Caption Generator -->
+  <div class="caption-panel">
+    <div class="tab-bar">
+      <div class="tab active" onclick="switchTab('generate')">✨ キャプション生成</div>
+      <div class="tab" onclick="switchTab('history')">📋 履歴</div>
+    </div>
+
+    <div id="tab-generate" class="tab-content active">
+      <!-- API Key -->
+      <div class="panel-section">
+        <h2>🔑 API設定</h2>
+        <div class="form-group">
+          <label>Claude API キー（キャプション自動生成に必要）</label>
+          <div class="api-key-row">
+            <input type="password" id="apiKey" placeholder="sk-ant-..." value="">
+            <button class="btn btn-secondary" onclick="toggleApiKey()">👁</button>
+          </div>
+          <small style="color:#aaa;font-size:11px;margin-top:4px;display:block">
+            キーはブラウザのみに保存されます（サーバー送信なし）
+          </small>
+        </div>
+        <button class="btn btn-secondary" style="width:100%;font-size:12px" onclick="saveApiKey()">💾 APIキーを保存</button>
+      </div>
+
+      <!-- Input form -->
+      <div class="panel-section">
+        <h2>📝 投稿情報</h2>
+        <div class="form-group">
+          <label>業種・ビジネスの種類</label>
+          <input type="text" id="businessType" placeholder="例：デザイン事務所、IT企業、飲食店...">
+        </div>
+        <div class="form-group">
+          <label>この投稿で伝えたいこと</label>
+          <textarea id="mainMessage" rows="3" placeholder="例：新サービスのリリース告知、採用情報、実績紹介..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>キーワード（任意）</label>
+          <input type="text" id="keywords" placeholder="例：DX推進、働き方改革、スタートアップ">
+        </div>
+        <div class="form-group">
+          <label>トーン・雰囲気</label>
+          <div class="tone-chips">
+            <div class="tone-chip active" onclick="selectTone(this)">プロフェッショナル</div>
+            <div class="tone-chip" onclick="selectTone(this)">フレンドリー</div>
+            <div class="tone-chip" onclick="selectTone(this)">熱意・情熱</div>
+            <div class="tone-chip" onclick="selectTone(this)">落ち着き・信頼</div>
+            <div class="tone-chip" onclick="selectTone(this)">ユーモア</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>ハッシュタグ数</label>
+          <select id="hashtagCount">
+            <option value="5">5個</option>
+            <option value="10" selected>10個</option>
+            <option value="15">15個</option>
+            <option value="20">20個</option>
+            <option value="30">30個（最大）</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>生成するキャプション数</label>
+          <select id="captionCount">
+            <option value="2">2パターン</option>
+            <option value="3" selected>3パターン</option>
+            <option value="5">5パターン</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="generateCaptions()">
+          ✨ キャプションを生成
+        </button>
+      </div>
+    </div>
+
+    <div id="tab-history" class="tab-content">
+      <div class="panel-section">
+        <h2>📋 保存した文章</h2>
+        <div id="historyList" style="color:#aaa;font-size:13px;text-align:center;padding:20px">
+          まだ保存された文章はありません
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="captionResults" class="caption-results" style="display:none">
+      <h2>✅ 生成結果</h2>
+      <div id="captionCards"></div>
+    </div>
+
+    <div id="loadingIndicator" class="loading" style="display:none">
+      <div class="spinner"></div>
+      <span>生成中...</span>
+    </div>
+  </div>
+</div>
+
+<div id="toast">コピーしました！</div>
+
+<script>
+// ============================
+// Canvas State
+// ============================
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+let bgImage = null;
+let textElements = [];
+let selectedIndex = -1;
+let isDragging = false;
+let dragOffsetX = 0, dragOffsetY = 0;
+
+// Caption history
+let captionHistory = JSON.parse(localStorage.getItem('igCaptionHistory') || '[]');
+
+// Load saved API key
+const savedKey = localStorage.getItem('igApiKey');
+if (savedKey) document.getElementById('apiKey').value = savedKey;
+
+// ============================
+// Image Loading
+// ============================
+function loadImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      bgImage = img;
+      setupCanvas(img);
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      bgImage = img;
+      setupCanvas(img);
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function setupCanvas(img) {
+  const maxSize = 600;
+  let w = img.width, h = img.height;
+  if (w > maxSize || h > maxSize) {
+    if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+    else { w = Math.round(w * maxSize / h); h = maxSize; }
+  }
+  canvas.width = w;
+  canvas.height = h;
+  document.getElementById('uploadPlaceholder').style.display = 'none';
+  canvas.style.display = 'block';
+  redraw();
+}
+
+// ============================
+// Drawing
+// ============================
+function redraw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (bgImage) ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+
+  textElements.forEach((el, i) => {
+    ctx.save();
+    const fontSize = el.size;
+    const fontStyle = el.bold ? 'bold' : 'normal';
+    ctx.font = `${fontStyle} ${fontSize}px ${el.font}`;
+    ctx.textAlign = el.align;
+    ctx.textBaseline = 'top';
+
+    const lines = el.text.split('\n');
+    const lineH = fontSize * 1.3;
+    const totalH = lines.length * lineH;
+    let x = el.x;
+    if (el.align === 'center') x = el.x;
+    else if (el.align === 'right') x = el.x;
+
+    // Background box
+    if (el.bg) {
+      const maxW = Math.max(...lines.map(l => ctx.measureText(l).width));
+      let bx = el.x - (el.align === 'center' ? maxW/2 + 10 : el.align === 'right' ? maxW + 10 : -10);
+      ctx.fillStyle = el.bgColor + 'cc';
+      ctx.fillRect(bx, el.y - 6, maxW + 20, totalH + 12);
+    }
+
+    // Shadow
+    if (el.shadow) {
+      ctx.shadowColor = 'rgba(0,0,0,0.7)';
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+    }
+
+    // Text
+    ctx.fillStyle = el.color;
+    lines.forEach((line, li) => {
+      ctx.fillText(line, x, el.y + li * lineH);
+    });
+
+    ctx.restore();
+
+    // Selection indicator
+    if (i === selectedIndex) {
+      const metrics = ctx.measureText(el.text.split('\n')[0]);
+      const lineH = el.size * 1.3;
+      const totalH = el.text.split('\n').length * lineH;
+      const w = Math.max(...el.text.split('\n').map(l => {
+        ctx.font = `${el.bold ? 'bold' : 'normal'} ${el.size}px ${el.font}`;
+        return ctx.measureText(l).width;
+      }));
+      let sx = el.align === 'center' ? el.x - w/2 - 6 :
+               el.align === 'right' ? el.x - w - 6 : el.x - 6;
+      ctx.strokeStyle = '#833ab4';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 3]);
+      ctx.strokeRect(sx, el.y - 4, w + 12, totalH + 8);
+      ctx.setLineDash([]);
+    }
+  });
+}
+
+// ============================
+// Text Elements
+// ============================
+function addTextBox(text = 'テキスト', x = null, y = null) {
+  if (!bgImage) { alert('まず画像を読み込んでください'); return; }
+  const el = {
+    text: text,
+    x: x !== null ? x : canvas.width / 2,
+    y: y !== null ? y : canvas.height / 2,
+    size: 40,
+    font: "'Noto Sans JP', sans-serif",
+    color: '#ffffff',
+    align: 'center',
+    bold: true,
+    shadow: true,
+    bg: false,
+    bgColor: '#000000'
+  };
+  textElements.push(el);
+  selectedIndex = textElements.length - 1;
+  updateControls();
+  redraw();
+  document.getElementById('textControls').classList.add('visible');
+}
+
+function deleteSelected() {
+  if (selectedIndex < 0) return;
+  textElements.splice(selectedIndex, 1);
+  selectedIndex = Math.min(selectedIndex, textElements.length - 1);
+  if (textElements.length === 0) {
+    selectedIndex = -1;
+    document.getElementById('textControls').classList.remove('visible');
+  }
+  redraw();
+}
+
+function clearAll() {
+  if (!confirm('すべてのテキストをクリアしますか？')) return;
+  textElements = [];
+  selectedIndex = -1;
+  document.getElementById('textControls').classList.remove('visible');
+  redraw();
+}
+
+function updateSelectedText() {
+  if (selectedIndex < 0) return;
+  const el = textElements[selectedIndex];
+  el.text = document.getElementById('ctrlText').value || 'テキスト';
+  el.font = document.getElementById('ctrlFont').value;
+  el.size = parseInt(document.getElementById('ctrlSize').value);
+  el.color = document.getElementById('ctrlColor').value;
+  el.bold = document.getElementById('ctrlBold').checked;
+  el.shadow = document.getElementById('ctrlShadow').checked;
+  el.bg = document.getElementById('ctrlBg').checked;
+  el.bgColor = document.getElementById('ctrlBgColor').value;
+  document.getElementById('sizeDisplay').textContent = el.size;
+  redraw();
+}
+
+function updateControls() {
+  if (selectedIndex < 0) return;
+  const el = textElements[selectedIndex];
+  document.getElementById('ctrlText').value = el.text;
+  document.getElementById('ctrlFont').value = el.font;
+  document.getElementById('ctrlSize').value = el.size;
+  document.getElementById('ctrlColor').value = el.color;
+  document.getElementById('ctrlBold').checked = el.bold;
+  document.getElementById('ctrlShadow').checked = el.shadow;
+  document.getElementById('ctrlBg').checked = el.bg;
+  document.getElementById('ctrlBgColor').value = el.bgColor;
+  document.getElementById('sizeDisplay').textContent = el.size;
+}
+
+function setColor(hex) {
+  document.getElementById('ctrlColor').value = hex;
+  document.querySelectorAll('.color-preset').forEach(el => {
+    el.classList.toggle('active', el.style.background === hex);
+  });
+  updateSelectedText();
+}
+
+function setAlign(align) {
+  if (selectedIndex < 0) return;
+  textElements[selectedIndex].align = align;
+  redraw();
+}
+
+// ============================
+// Mouse Events (Drag)
+// ============================
+function getCanvasPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  return {
+    x: (e.clientX - rect.left) * scaleX,
+    y: (e.clientY - rect.top) * scaleY
+  };
+}
+
+function hitTest(el, px, py) {
+  ctx.font = `${el.bold ? 'bold' : 'normal'} ${el.size}px ${el.font}`;
+  const lineH = el.size * 1.3;
+  const lines = el.text.split('\n');
+  const w = Math.max(...lines.map(l => ctx.measureText(l).width));
+  const h = lines.length * lineH;
+  let x = el.align === 'center' ? el.x - w/2 :
+           el.align === 'right' ? el.x - w : el.x;
+  return px >= x - 10 && px <= x + w + 10 && py >= el.y - 6 && py <= el.y + h + 6;
+}
+
+canvas.addEventListener('mousedown', (e) => {
+  const pos = getCanvasPos(e);
+  for (let i = textElements.length - 1; i >= 0; i--) {
+    if (hitTest(textElements[i], pos.x, pos.y)) {
+      selectedIndex = i;
+      isDragging = true;
+      dragOffsetX = pos.x - textElements[i].x;
+      dragOffsetY = pos.y - textElements[i].y;
+      canvas.style.cursor = 'grabbing';
+      updateControls();
+      document.getElementById('textControls').classList.add('visible');
+      redraw();
+      return;
+    }
+  }
+  selectedIndex = -1;
+  redraw();
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  const pos = getCanvasPos(e);
+  if (isDragging && selectedIndex >= 0) {
+    textElements[selectedIndex].x = pos.x - dragOffsetX;
+    textElements[selectedIndex].y = pos.y - dragOffsetY;
+    redraw();
+  } else {
+    let hit = textElements.some(el => hitTest(el, pos.x, pos.y));
+    canvas.style.cursor = hit ? 'grab' : 'default';
+  }
+});
+
+canvas.addEventListener('mouseup', () => {
+  isDragging = false;
+  canvas.style.cursor = 'default';
+});
+
+canvas.addEventListener('mouseleave', () => { isDragging = false; });
+
+// ============================
+// Templates
+// ============================
+function applyTemplate(type) {
+  if (!bgImage) { alert('まず画像を読み込んでください'); return; }
+  textElements = [];
+  selectedIndex = -1;
+  const w = canvas.width, h = canvas.height;
+  const templates = {
+    title_center: [
+      { text: 'メインタイトル', x: w/2, y: h/2 - 30, size: 48, align: 'center', color: '#ffffff', bold: true, shadow: true, bg: false, bgColor: '#000' }
+    ],
+    title_top: [
+      { text: 'タイトルテキスト', x: w/2, y: 40, size: 42, align: 'center', color: '#ffffff', bold: true, shadow: true, bg: true, bgColor: '#000000' }
+    ],
+    title_bottom: [
+      { text: 'タイトルテキスト', x: w/2, y: h - 100, size: 42, align: 'center', color: '#ffffff', bold: true, shadow: true, bg: true, bgColor: '#000000' }
+    ],
+    title_sub: [
+      { text: 'メインタイトル', x: w/2, y: h/2 - 60, size: 48, align: 'center', color: '#ffffff', bold: true, shadow: true, bg: false, bgColor: '#000' },
+      { text: 'サブタイトルテキスト', x: w/2, y: h/2 + 20, size: 24, align: 'center', color: '#fcb045', bold: false, shadow: true, bg: false, bgColor: '#000' }
+    ],
+    overlay_full: [
+      { text: 'タイトル', x: w/2, y: h * 0.3, size: 56, align: 'center', color: '#ffffff', bold: true, shadow: true, bg: false, bgColor: '#000' },
+      { text: '詳細テキスト\nここに内容を入力', x: w/2, y: h * 0.55, size: 22, align: 'center', color: '#ffffff', bold: false, shadow: true, bg: false, bgColor: '#000' }
+    ],
+    quote: [
+      { text: '「ここに引用文を入力\n心に響く言葉」', x: w/2, y: h/2 - 50, size: 28, align: 'center', color: '#ffffff', bold: true, shadow: true, bg: true, bgColor: '#000000' },
+      { text: '— 氏名・出典', x: w/2, y: h/2 + 60, size: 18, align: 'center', color: '#fcb045', bold: false, shadow: true, bg: false, bgColor: '#000' }
+    ],
+    product: [
+      { text: '商品名', x: w/2, y: 30, size: 36, align: 'center', color: '#ffffff', bold: true, shadow: true, bg: true, bgColor: '#833ab4' },
+      { text: '¥ 0,000（税込）', x: w/2, y: h - 90, size: 30, align: 'center', color: '#fcb045', bold: true, shadow: true, bg: true, bgColor: '#000000' }
+    ],
+    announcement: [
+      { text: '📣 お知らせ', x: w/2, y: 30, size: 36, align: 'center', color: '#ffffff', bold: true, shadow: true, bg: true, bgColor: '#fd1d1d' },
+      { text: 'お知らせの内容を\nここに入力してください', x: w/2, y: h/2 - 20, size: 26, align: 'center', color: '#ffffff', bold: false, shadow: true, bg: false, bgColor: '#000' }
+    ]
+  };
+
+  const template = templates[type];
+  if (!template) return;
+  template.forEach(t => {
+    textElements.push({ ...t, font: "'Noto Sans JP', sans-serif" });
+  });
+  selectedIndex = 0;
+  updateControls();
+  document.getElementById('textControls').classList.add('visible');
+  redraw();
+}
+
+// ============================
+// Download
+// ============================
+function downloadImage() {
+  if (!bgImage) { alert('画像が読み込まれていません'); return; }
+  // Draw without selection markers
+  const prevSel = selectedIndex;
+  selectedIndex = -1;
+  redraw();
+  setTimeout(() => {
+    const link = document.createElement('a');
+    link.download = 'instagram_post.png';
+    link.href = canvas.toDataURL('image/png', 1.0);
+    link.click();
+    selectedIndex = prevSel;
+    redraw();
+  }, 50);
+}
+
+// ============================
+// Caption Generation
+// ============================
+let selectedTone = 'プロフェッショナル';
+
+function selectTone(el) {
+  document.querySelectorAll('.tone-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  selectedTone = el.textContent;
+}
+
+async function generateCaptions() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey) { alert('Claude API キーを入力してください'); return; }
+
+  const businessType = document.getElementById('businessType').value.trim();
+  const mainMessage = document.getElementById('mainMessage').value.trim();
+  const keywords = document.getElementById('keywords').value.trim();
+  const hashtagCount = document.getElementById('hashtagCount').value;
+  const captionCount = document.getElementById('captionCount').value;
+
+  if (!mainMessage) { alert('伝えたい内容を入力してください'); return; }
+
+  document.getElementById('loadingIndicator').style.display = 'flex';
+  document.getElementById('captionResults').style.display = 'none';
+
+  const prompt = `あなたはInstagramマーケティングの専門家です。ビジネス向けのInstagram投稿キャプションを作成してください。
+
+【ビジネス情報】
+業種: ${businessType || '未指定'}
+伝えたい内容: ${mainMessage}
+キーワード: ${keywords || 'なし'}
+トーン: ${selectedTone}
+
+【要件】
+- ${captionCount}パターンのキャプションを作成
+- 各キャプションは日本語で150〜250文字程度
+- 改行を活用して読みやすくする
+- 絵文字を適度に使用する
+- 最後に${hashtagCount}個の日本語・英語混合のハッシュタグを付ける
+- ビジネスアカウントらしい品質の高い文章
+
+以下のJSON形式で返してください（余計な説明不要）：
+{
+  "captions": [
+    {
+      "text": "キャプション本文",
+      "hashtags": "#ハッシュタグ1 #ハッシュタグ2 ..."
+    }
+  ]
+}`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-allow-browser': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-5',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error?.message || `API Error ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.content[0].text.trim();
+
+    // Extract JSON
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('JSONの解析に失敗しました');
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    displayCaptions(parsed.captions);
+    saveCaptionHistory(parsed.captions, mainMessage);
+
+  } catch (err) {
+    alert('エラー: ' + err.message);
+  } finally {
+    document.getElementById('loadingIndicator').style.display = 'none';
+  }
+}
+
+function displayCaptions(captions) {
+  const container = document.getElementById('captionCards');
+  container.innerHTML = '';
+
+  captions.forEach((cap, i) => {
+    const card = document.createElement('div');
+    card.className = 'caption-card';
+    card.innerHTML = `
+      <div class="caption-number">パターン ${i + 1}</div>
+      <div class="caption-text">${escapeHtml(cap.text)}</div>
+      <div class="hashtags">${escapeHtml(cap.hashtags)}</div>
+      <div class="caption-actions">
+        <button class="btn btn-secondary" onclick="copyCaption(${i})">📋 コピー</button>
+        <button class="btn btn-secondary" onclick="copyHashtags(${i})">🏷 HTコピー</button>
+        <button class="btn btn-primary" onclick="saveCaption(${i})">💾 保存</button>
+      </div>
+    `;
+    card.dataset.text = cap.text;
+    card.dataset.hashtags = cap.hashtags;
+    container.appendChild(card);
+  });
+
+  document.getElementById('captionResults').style.display = 'block';
+  document.getElementById('captionResults').scrollIntoView({ behavior: 'smooth' });
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+}
+
+function copyCaption(i) {
+  const cards = document.querySelectorAll('.caption-card');
+  const text = cards[i].dataset.text + '\n\n' + cards[i].dataset.hashtags;
+  navigator.clipboard.writeText(text).then(() => showToast('キャプション全体をコピーしました'));
+}
+
+function copyHashtags(i) {
+  const cards = document.querySelectorAll('.caption-card');
+  navigator.clipboard.writeText(cards[i].dataset.hashtags)
+    .then(() => showToast('ハッシュタグをコピーしました'));
+}
+
+function saveCaption(i) {
+  const cards = document.querySelectorAll('.caption-card');
+  const entry = {
+    id: Date.now() + i,
+    date: new Date().toLocaleDateString('ja-JP'),
+    text: cards[i].dataset.text,
+    hashtags: cards[i].dataset.hashtags
+  };
+  captionHistory.unshift(entry);
+  if (captionHistory.length > 50) captionHistory.pop();
+  localStorage.setItem('igCaptionHistory', JSON.stringify(captionHistory));
+  showToast('保存しました');
+  renderHistory();
+}
+
+function saveCaptionHistory(captions, topic) {
+  // Auto-save stub (optional)
+}
+
+function renderHistory() {
+  const container = document.getElementById('historyList');
+  if (captionHistory.length === 0) {
+    container.innerHTML = '<div style="color:#aaa;font-size:13px;text-align:center;padding:20px">まだ保存された文章はありません</div>';
+    return;
+  }
+  container.innerHTML = captionHistory.map(entry => `
+    <div class="caption-card" style="margin-bottom:12px">
+      <div class="caption-number">${entry.date}</div>
+      <div class="caption-text" style="font-size:12px">${escapeHtml(entry.text)}</div>
+      <div class="hashtags" style="font-size:11px">${escapeHtml(entry.hashtags)}</div>
+      <div class="caption-actions">
+        <button class="btn btn-secondary" onclick="copyFull('${entry.id}')">📋 コピー</button>
+        <button class="btn btn-danger" onclick="deleteHistory('${entry.id}')">🗑 削除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function copyFull(id) {
+  const entry = captionHistory.find(e => e.id == id);
+  if (!entry) return;
+  navigator.clipboard.writeText(entry.text + '\n\n' + entry.hashtags)
+    .then(() => showToast('コピーしました'));
+}
+
+function deleteHistory(id) {
+  captionHistory = captionHistory.filter(e => e.id != id);
+  localStorage.setItem('igCaptionHistory', JSON.stringify(captionHistory));
+  renderHistory();
+}
+
+// ============================
+// UI Helpers
+// ============================
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && tab === 'generate') || (i === 1 && tab === 'history'));
+  });
+  document.getElementById('tab-generate').classList.toggle('active', tab === 'generate');
+  document.getElementById('tab-history').classList.toggle('active', tab === 'history');
+  if (tab === 'history') renderHistory();
+}
+
+function toggleApiKey() {
+  const input = document.getElementById('apiKey');
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function saveApiKey() {
+  const key = document.getElementById('apiKey').value.trim();
+  if (key) {
+    localStorage.setItem('igApiKey', key);
+    showToast('APIキーを保存しました');
+  }
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// Initial render
+redraw();
+</script>
+</body>
+</html>
