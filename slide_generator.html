@@ -644,24 +644,45 @@ prompt_enは必ず英語で、画像の中に文字を入れないよう "no tex
     let content;
 
     if (currentProvider === 'gemini') {
-      // ── Gemini API（無料）──
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
-      const res = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-          contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-          generationConfig: { maxOutputTokens: 4000, temperature: 0.7 }
-        })
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error?.message || `Gemini API Error ${res.status}`);
+      // ── Gemini API（無料）── 複数モデルを自動で順番に試す
+      const GEMINI_MODELS = [
+        'gemini-pro',
+        'gemini-1.5-pro',
+        'gemini-1.5-flash',
+        'gemini-2.0-flash-lite',
+        'gemini-2.0-flash',
+      ];
+      let lastError = '';
+      for (const model of GEMINI_MODELS) {
+        try {
+          document.querySelector('.loading-sub').textContent = `モデル ${model} を試しています...`;
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+          // gemini-pro は systemInstruction 非対応なので結合
+          const isLegacy = model === 'gemini-pro';
+          const body = isLegacy
+            ? { contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userPrompt }] }],
+                generationConfig: { maxOutputTokens: 4000 } }
+            : { systemInstruction: { parts: [{ text: systemPrompt }] },
+                contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+                generationConfig: { maxOutputTokens: 4000, temperature: 0.7 } };
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+          if (!res.ok) {
+            const err = await res.json();
+            lastError = err.error?.message || `Error ${res.status}`;
+            continue; // 次のモデルへ
+          }
+          const data = await res.json();
+          const txt = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+          if (txt) { content = txt; break; }
+        } catch (e) {
+          lastError = e.message;
+        }
       }
-      const data = await res.json();
-      content = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-      if (!content) throw new Error('Geminiからの応答が空でした');
+      if (!content) throw new Error('利用可能なGeminiモデルが見つかりませんでした。\n最後のエラー: ' + lastError);
 
     } else {
       // ── Claude API（有料）──
