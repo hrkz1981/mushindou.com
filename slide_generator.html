@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>スライド自動生成ツール</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+    header h1 { font-size: 18px; font-weight: 700; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 0;
+      min-height: calc(100vh - 52px);
+    }
+
+    /* ===== Left: Input Panel ===== */
+    .input-panel {
+      background: white;
+      border-right: 1px solid #e8e8e8;
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #764ba2;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .form-block {
+      background: #fafafa;
+      border: 1px solid #ebebeb;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+      background: white;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: #764ba2;
+    }
+    textarea { resize: vertical; }
+
+    .api-row {
+      display: flex;
+      gap: 8px;
+    }
+    .api-row input { flex: 1; }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      width: 100%;
+      font-size: 15px;
+      padding: 14px;
+      border-radius: 10px;
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-sm {
+      padding: 5px 12px;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+    .btn-copy { background: #f0f0f0; color: #555; border: 1px solid #ddd; }
+    .btn-copy:hover { background: #e0e0e0; }
+    .btn-copy.copied { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+
+    .style-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .chip {
+      padding: 5px 12px;
+      border: 1.5px solid #ddd;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: white;
+      user-select: none;
+    }
+    .chip.active { background: #764ba2; color: white; border-color: #764ba2; }
+
+    /* ===== Right: Output Panel ===== */
+    .output-panel {
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .output-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #ccc;
+      gap: 16px;
+      text-align: center;
+    }
+    .output-empty .empty-icon { font-size: 64px; }
+    .output-empty p { font-size: 15px; }
+
+    /* Slide Cards */
+    .slides-grid {
+      display: grid;
+      gap: 20px;
+    }
+
+    .slide-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      overflow: hidden;
+      border: 1px solid #eee;
+      transition: box-shadow 0.2s;
+    }
+    .slide-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+
+    .slide-header {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .slide-num {
+      font-size: 13px;
+      font-weight: 700;
+      opacity: 0.9;
+    }
+    .slide-type-badge {
+      font-size: 11px;
+      background: rgba(255,255,255,0.2);
+      padding: 2px 10px;
+      border-radius: 10px;
+    }
+
+    .slide-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+    }
+
+    .slide-text-section {
+      padding: 16px;
+      border-right: 1px solid #f0f0f0;
+    }
+    .slide-prompt-section {
+      padding: 16px;
+      background: #fafbff;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .text-content {
+      font-size: 13px;
+      line-height: 1.8;
+      color: #333;
+      white-space: pre-wrap;
+      background: #f8f8f8;
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 80px;
+      margin-bottom: 8px;
+      border: 1px solid #ebebeb;
+    }
+
+    .prompt-content {
+      font-size: 12px;
+      line-height: 1.7;
+      color: #444;
+      white-space: pre-wrap;
+      background: #f0f4ff;
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 80px;
+      margin-bottom: 8px;
+      border: 1px solid #dce4ff;
+      font-family: 'Courier New', monospace;
+    }
+
+    .prompt-ja {
+      background: #fff8f0;
+      border-color: #ffe0c0;
+      font-family: inherit;
+      color: #664000;
+    }
+
+    .copy-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    /* Loading */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.85);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .loading-overlay.active { display: flex; }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #eee;
+      border-top-color: #764ba2;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 15px; color: #764ba2; font-weight: 600; }
+    .loading-sub { font-size: 12px; color: #aaa; }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #333;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      transform: translateY(60px);
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 9999;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+
+    /* Summary bar */
+    .summary-bar {
+      background: white;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      border: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .summary-info { font-size: 14px; color: #555; }
+    .summary-info strong { color: #764ba2; }
+    .summary-actions { display: flex; gap: 8px; }
+
+    .all-copy-btn {
+      padding: 8px 16px;
+      background: #764ba2;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .all-copy-btn:hover { opacity: 0.85; }
+
+    /* Editable content */
+    [contenteditable="true"] {
+      outline: none;
+      cursor: text;
+    }
+    [contenteditable="true"]:focus {
+      background: #fffde7 !important;
+      border-color: #f0c000 !important;
+    }
+
+    .edit-hint {
+      font-size: 10px;
+      color: #bbb;
+      margin-top: 4px;
+    }
+
+    /* Prompt style toggle */
+    .prompt-toggle {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .prompt-toggle button {
+      padding: 3px 10px;
+      font-size: 11px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      background: white;
+    }
+    .prompt-toggle button.active {
+      background: #764ba2;
+      color: white;
+      border-color: #764ba2;
+    }
+
+    input[type="checkbox"] { accent-color: #764ba2; }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #555;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span>🎨</span>
+  <h1>スライド自動生成ツール — テキスト整形 & イラストプロンプト生成</h1>
+</header>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">生成中...</div>
+  <div class="loading-sub">Claude AIがスライドとプロンプトを作成しています</div>
+</div>
+
+<div class="layout">
+  <!-- ===== Left: Input ===== -->
+  <div class="input-panel">
+
+    <!-- API Key -->
+    <div class="form-block">
+      <div class="section-title">🔑 API設定</div>
+      <label>Claude API キー</label>
+      <div class="api-row">
+        <input type="password" id="apiKey" placeholder="sk-ant-..." />
+        <button class="btn btn-sm btn-copy" onclick="toggleKey()">👁</button>
+        <button class="btn btn-sm btn-copy" onclick="saveKey()">保存</button>
+      </div>
+    </div>
+
+    <!-- Client text -->
+    <div class="form-block">
+      <div class="section-title">📄 クライアントからのテキスト</div>
+      <label>生テキストをそのまま貼り付けてください</label>
+      <textarea id="clientText" rows="10"
+        placeholder="例：
+ダイエットのお悩み解答
+①食事を制限しているのに体重が落ちない
+原因：糖質や脂質などの制限をすると代謝が低下します。筋肉まで落ちている状態になります。
+解決策：食べる量は減らしたとしてもバランス良く栄養を取れば問題なく痩せやすくなります。
+
+②お腹だけポッコリ出ている
+..."></textarea>
+    </div>
+
+    <!-- Settings -->
+    <div class="form-block">
+      <div class="section-title">⚙️ 設定</div>
+
+      <label>業種 / アカウントのテーマ</label>
+      <input type="text" id="bizType" value="整体院・ダイエット・健康" placeholder="例：整体院、美容サロン、コーチング..." style="margin-bottom:12px">
+
+      <label>イラストのスタイル</label>
+      <div class="style-chips" id="styleChips">
+        <div class="chip active" onclick="toggleChip(this)">日本のアニメ調</div>
+        <div class="chip" onclick="toggleChip(this)">シンプルフラット</div>
+        <div class="chip" onclick="toggleChip(this)">水彩タッチ</div>
+        <div class="chip" onclick="toggleChip(this)">リアル写真風</div>
+        <div class="chip" onclick="toggleChip(this)">3Dキャラクター</div>
+      </div>
+
+      <label style="margin-top:12px">メインキャラクター</label>
+      <div class="style-chips" id="charChips">
+        <div class="chip active" onclick="toggleChip(this, 'char')">30代女性</div>
+        <div class="chip" onclick="toggleChip(this, 'char')">20代女性</div>
+        <div class="chip" onclick="toggleChip(this, 'char')">男女両方</div>
+        <div class="chip" onclick="toggleChip(this, 'char')">キャラなし</div>
+      </div>
+
+      <label style="margin-top:12px">カラートーン</label>
+      <div class="style-chips" id="colorChips">
+        <div class="chip active" onclick="toggleChip(this, 'color')">パステル・柔らか</div>
+        <div class="chip" onclick="toggleChip(this, 'color')">クール・モノトーン</div>
+        <div class="chip" onclick="toggleChip(this, 'color')">明るい・ビビッド</div>
+        <div class="chip" onclick="toggleChip(this, 'color')">ナチュラル・アース</div>
+      </div>
+
+      <div class="checkbox-row" style="margin-top:12px">
+        <input type="checkbox" id="includeEn" checked>
+        <label style="display:inline;margin:0">英語プロンプトも生成（DALL-E推奨）</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="includeJa" checked>
+        <label style="display:inline;margin:0">日本語プロンプトも生成（メモ用）</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="noChar">
+        <label style="display:inline;margin:0">表紙スライドは人物なしで生成</label>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="generateBtn" onclick="generate()">
+      ✨ スライドを自動生成
+    </button>
+  </div>
+
+  <!-- ===== Right: Output ===== -->
+  <div class="output-panel" id="outputPanel">
+    <div class="output-empty" id="emptyState">
+      <div class="empty-icon">🖼️</div>
+      <p>左にクライアントのテキストを貼り付けて<br>「スライドを自動生成」を押してください</p>
+      <p style="font-size:12px;color:#bbb">Claude AIがテキストを整形し<br>各スライドのイラストプロンプトも自動作成します</p>
+    </div>
+    <div id="slidesOutput" style="display:none">
+      <div class="summary-bar" id="summaryBar"></div>
+      <div class="slides-grid" id="slidesGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ========================
+// State
+// ========================
+let currentSlides = [];
+let activeStyle = '日本のアニメ調';
+let activeChar = '30代女性';
+let activeColor = 'パステル・柔らか';
+
+// Load saved API key
+const savedKey = localStorage.getItem('sg_apiKey');
+if (savedKey) document.getElementById('apiKey').value = savedKey;
+
+// ========================
+// Chip toggles (single select per group)
+// ========================
+function toggleChip(el, group) {
+  const parent = el.parentElement;
+  parent.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+
+  if (!group) activeStyle = el.textContent;
+  else if (group === 'char') activeChar = el.textContent;
+  else if (group === 'color') activeColor = el.textContent;
+}
+
+// ========================
+// API Key helpers
+// ========================
+function toggleKey() {
+  const inp = document.getElementById('apiKey');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+function saveKey() {
+  const k = document.getElementById('apiKey').value.trim();
+  if (k) { localStorage.setItem('sg_apiKey', k); showToast('APIキーを保存しました'); }
+}
+
+// ========================
+// Main generation
+// ========================
+async function generate() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const clientText = document.getElementById('clientText').value.trim();
+  if (!apiKey) { alert('Claude APIキーを入力してください'); return; }
+  if (!clientText) { alert('クライアントのテキストを入力してください'); return; }
+
+  const bizType = document.getElementById('bizType').value.trim() || '一般ビジネス';
+  const includeEn = document.getElementById('includeEn').checked;
+  const includeJa = document.getElementById('includeJa').checked;
+  const noChar = document.getElementById('noChar').checked;
+
+  document.getElementById('loadingOverlay').classList.add('active');
+  document.getElementById('generateBtn').disabled = true;
+
+  const styleDesc = buildStyleDesc();
+
+  const systemPrompt = `あなたはInstagramのスライド投稿制作の専門家です。
+クライアントから受け取った文章を、Instagramカルーセル投稿用のスライドに整形し、
+各スライドに最適なAI画像生成プロンプトを作成します。
+
+業種・テーマ: ${bizType}
+イラストスタイル: ${styleDesc}`;
+
+  const userPrompt = `以下のクライアントテキストをInstagramスライド投稿用に整形し、
+各スライドのDALL-E画像プロンプトを作成してください。
+
+【クライアントテキスト】
+${clientText}
+
+【要件】
+- スライド数は内容に応じて適切に決定（通常5〜10枚）
+- 1枚目は必ず表紙スライド（タイトル・キャッチコピー）
+- 最後は必ずまとめ・CTA（行動喚起）スライド
+- 各スライドのテキストは読みやすく整形（適切な改行・箇条書き）
+- 文字数は1スライドあたり最大150字程度
+- テキストは縦読みしても伝わるよう強調ポイントを意識
+
+以下のJSON形式で返してください（説明文不要、JSONのみ）:
+{
+  "total": スライド枚数,
+  "title": "投稿全体のタイトル",
+  "slides": [
+    {
+      "num": 1,
+      "type": "表紙",
+      "heading": "メインタイトル",
+      "body": "スライド本文テキスト（改行は\\nで）",
+      "layout_hint": "テキスト配置のヒント（例：上部にタイトル、中央に大きく）",
+      ${includeEn ? `"prompt_en": "DALL-E English prompt: [detailed illustration description, ${styleDesc}, NO text in image]",` : ''}
+      ${includeJa ? `"prompt_ja": "日本語メモ：このスライドで描くシーンの説明",` : ''}
+      "scene": "シーンの要約（1行）"
+    }
+  ]
+}
+
+表紙スライド(num:1)の${noChar ? 'prompt_enは人物なし、背景・物のみで作成' : 'prompt_enは明るい雰囲気で'}。
+prompt_enは必ず英語で、画像の中に文字を入れないよう "no text, no letters" を必ず含めること。`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-allow-browser': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-5',
+        max_tokens: 4000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || `API Error ${res.status}`);
+    }
+
+    const data = await res.json();
+    const content = data.content[0].text.trim();
+
+    // Extract JSON
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('JSON解析エラー');
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    currentSlides = parsed.slides;
+    renderSlides(parsed);
+
+  } catch (err) {
+    alert('エラー: ' + err.message);
+  } finally {
+    document.getElementById('loadingOverlay').classList.remove('active');
+    document.getElementById('generateBtn').disabled = false;
+  }
+}
+
+function buildStyleDesc() {
+  const styleMap = {
+    '日本のアニメ調': 'Japanese anime illustration style, clean lines, cute characters',
+    'シンプルフラット': 'simple flat design illustration, minimalist, vector style',
+    '水彩タッチ': 'soft watercolor illustration, gentle brush strokes',
+    'リアル写真風': 'realistic photo style, photorealistic',
+    '3Dキャラクター': '3D rendered character, smooth shading, modern 3D style'
+  };
+  const charMap = {
+    '30代女性': 'Japanese woman in her 30s, friendly and relatable',
+    '20代女性': 'young Japanese woman in her 20s',
+    '男女両方': 'Japanese man and woman',
+    'キャラなし': 'no human characters, objects and background only'
+  };
+  const colorMap = {
+    'パステル・柔らか': 'soft pastel colors, warm and gentle atmosphere',
+    'クール・モノトーン': 'cool monotone colors, clean and professional',
+    '明るい・ビビッド': 'bright vivid colors, energetic and cheerful',
+    'ナチュラル・アース': 'natural earth tones, warm and organic'
+  };
+  return `${styleMap[activeStyle] || activeStyle}, ${charMap[activeChar] || activeChar}, ${colorMap[activeColor] || activeColor}`;
+}
+
+// ========================
+// Render slides
+// ========================
+function renderSlides(data) {
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('slidesOutput').style.display = 'block';
+
+  const includeEn = document.getElementById('includeEn').checked;
+  const includeJa = document.getElementById('includeJa').checked;
+
+  // Summary bar
+  document.getElementById('summaryBar').innerHTML = `
+    <div class="summary-info">
+      「<strong>${escHtml(data.title)}</strong>」— <strong>${data.total}枚</strong>のスライドを生成しました
+    </div>
+    <div class="summary-actions">
+      <button class="all-copy-btn" onclick="copyAllTexts()">📋 全テキストをコピー</button>
+      <button class="all-copy-btn" style="background:#e8764ba2" onclick="copyAllPrompts()">🎨 全プロンプトをコピー</button>
+    </div>
+  `;
+
+  // Slide cards
+  const grid = document.getElementById('slidesGrid');
+  grid.innerHTML = '';
+
+  data.slides.forEach((slide, idx) => {
+    const card = document.createElement('div');
+    card.className = 'slide-card';
+    card.id = `slide-${idx}`;
+
+    const hasPromptEn = includeEn && slide.prompt_en;
+    const hasPromptJa = includeJa && slide.prompt_ja;
+
+    card.innerHTML = `
+      <div class="slide-header">
+        <div class="slide-num">スライド ${slide.num}${slide.heading ? ' — ' + escHtml(slide.heading) : ''}</div>
+        <div class="slide-type-badge">${escHtml(slide.type || '')}</div>
+      </div>
+      <div class="slide-body">
+        <!-- Text Section -->
+        <div class="slide-text-section">
+          <div class="section-label">✏️ テキスト（編集可能）</div>
+          ${slide.heading ? `<div style="font-size:11px;color:#aaa;margin-bottom:4px">【見出し】</div>
+          <div class="text-content" contenteditable="true" id="heading-${idx}">${escHtml(slide.heading)}</div>` : ''}
+          <div style="font-size:11px;color:#aaa;margin-bottom:4px;margin-top:6px">【本文】</div>
+          <div class="text-content" contenteditable="true" id="body-${idx}">${escHtml(slide.body || '').replace(/\\n/g, '\n')}</div>
+          ${slide.layout_hint ? `<div style="font-size:11px;color:#999;margin-top:4px">💡 配置ヒント: ${escHtml(slide.layout_hint)}</div>` : ''}
+          <div class="copy-row" style="margin-top:8px">
+            <button class="btn btn-sm btn-copy" onclick="copyText('heading-${idx}', 'body-${idx}', this)">📋 テキストコピー</button>
+          </div>
+          <div class="edit-hint">クリックして直接編集できます</div>
+        </div>
+
+        <!-- Prompt Section -->
+        <div class="slide-prompt-section">
+          <div class="section-label">🎨 DALL-Eプロンプト</div>
+          ${slide.scene ? `<div style="font-size:11px;color:#888;margin-bottom:8px">シーン: ${escHtml(slide.scene)}</div>` : ''}
+
+          ${hasPromptEn ? `
+          <div style="font-size:11px;color:#aaa;margin-bottom:4px">🇺🇸 英語プロンプト（DALL-E用）</div>
+          <div class="prompt-content" contenteditable="true" id="en-${idx}">${escHtml(slide.prompt_en)}</div>
+          <div class="copy-row" style="margin-bottom:8px">
+            <button class="btn btn-sm btn-copy" onclick="copyEl('en-${idx}', this)">📋 英語コピー</button>
+          </div>` : ''}
+
+          ${hasPromptJa ? `
+          <div style="font-size:11px;color:#aaa;margin-bottom:4px">🇯🇵 日本語メモ</div>
+          <div class="prompt-content prompt-ja" contenteditable="true" id="ja-${idx}">${escHtml(slide.prompt_ja)}</div>
+          <div class="copy-row">
+            <button class="btn btn-sm btn-copy" onclick="copyEl('ja-${idx}', this)">📋 日本語コピー</button>
+          </div>` : ''}
+
+          ${!hasPromptEn && !hasPromptJa ? '<div style="color:#ccc;font-size:12px">プロンプト生成オフ</div>' : ''}
+          <div class="edit-hint">プロンプトも編集できます</div>
+        </div>
+      </div>
+    `;
+
+    grid.appendChild(card);
+  });
+
+  document.getElementById('slidesOutput').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ========================
+// Copy helpers
+// ========================
+function copyEl(id, btn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const text = el.innerText || el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = '✅ コピー済み';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+    }
+    showToast('コピーしました');
+  });
+}
+
+function copyText(headingId, bodyId, btn) {
+  const h = document.getElementById(headingId);
+  const b = document.getElementById(bodyId);
+  const text = [(h ? h.innerText : ''), (b ? b.innerText : '')].filter(Boolean).join('\n\n');
+  navigator.clipboard.writeText(text).then(() => {
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = '✅ コピー済み';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+    }
+    showToast('テキストをコピーしました');
+  });
+}
+
+function copyAllTexts() {
+  const parts = [];
+  currentSlides.forEach((slide, idx) => {
+    const h = document.getElementById(`heading-${idx}`);
+    const b = document.getElementById(`body-${idx}`);
+    const heading = h ? h.innerText : slide.heading;
+    const body = b ? b.innerText : slide.body;
+    parts.push(`=== スライド${slide.num} [${slide.type}] ===\n${heading ? heading + '\n' : ''}${body || ''}`);
+  });
+  navigator.clipboard.writeText(parts.join('\n\n')).then(() => showToast('全テキストをコピーしました'));
+}
+
+function copyAllPrompts() {
+  const parts = [];
+  currentSlides.forEach((slide, idx) => {
+    const en = document.getElementById(`en-${idx}`);
+    const ja = document.getElementById(`ja-${idx}`);
+    const enText = en ? en.innerText : (slide.prompt_en || '');
+    const jaText = ja ? ja.innerText : (slide.prompt_ja || '');
+    if (enText || jaText) {
+      parts.push(`=== スライド${slide.num} [${slide.type}] ===\n${enText ? '[EN] ' + enText : ''}\n${jaText ? '[JA] ' + jaText : ''}`);
+    }
+  });
+  navigator.clipboard.writeText(parts.join('\n\n')).then(() => showToast('全プロンプトをコピーしました'));
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
