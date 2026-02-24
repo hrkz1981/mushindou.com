@@ -398,9 +398,21 @@
     <!-- API Key -->
     <div class="form-block">
       <div class="section-title">🔑 API設定</div>
-      <label>Claude API キー</label>
+
+      <label>AIサービスを選択</label>
+      <div class="style-chips" style="margin-bottom:12px">
+        <div class="chip active" id="chip-gemini" onclick="switchProvider('gemini')">🆓 Gemini（無料）</div>
+        <div class="chip" id="chip-claude" onclick="switchProvider('claude')">💳 Claude（有料）</div>
+      </div>
+
+      <div id="provider-hint" style="font-size:11px;background:#e8f5e9;border:1px solid #c8e6c9;border-radius:8px;padding:8px 10px;margin-bottom:10px;color:#2e7d32;line-height:1.6">
+        ✅ <strong>Gemini は完全無料</strong>で使えます<br>
+        APIキーの取得先 → <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#1565c0">aistudio.google.com/apikey</a>
+      </div>
+
+      <label id="apiKeyLabel">Gemini API キー（AIza...）</label>
       <div class="api-row">
-        <input type="password" id="apiKey" placeholder="sk-ant-..." />
+        <input type="password" id="apiKey" placeholder="AIza..." />
         <button class="btn btn-sm btn-copy" onclick="toggleKey()">👁</button>
         <button class="btn btn-sm btn-copy" onclick="saveKey()">保存</button>
       </div>
@@ -497,9 +509,42 @@ let activeStyle = '日本のアニメ調';
 let activeChar = '30代女性';
 let activeColor = 'パステル・柔らか';
 
-// Load saved API key
-const savedKey = localStorage.getItem('sg_apiKey');
-if (savedKey) document.getElementById('apiKey').value = savedKey;
+// ========================
+// Provider switching
+// ========================
+let currentProvider = 'gemini';
+
+function switchProvider(p) {
+  currentProvider = p;
+  document.getElementById('chip-gemini').classList.toggle('active', p === 'gemini');
+  document.getElementById('chip-claude').classList.toggle('active', p === 'claude');
+
+  const hint = document.getElementById('provider-hint');
+  const label = document.getElementById('apiKeyLabel');
+  const inp = document.getElementById('apiKey');
+
+  if (p === 'gemini') {
+    hint.style.background = '#e8f5e9';
+    hint.style.borderColor = '#c8e6c9';
+    hint.style.color = '#2e7d32';
+    hint.innerHTML = '✅ <strong>Gemini は完全無料</strong>で使えます<br>APIキーの取得先 → <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#1565c0">aistudio.google.com/apikey</a>';
+    label.textContent = 'Gemini API キー（AIza...）';
+    inp.placeholder = 'AIza...';
+    inp.value = localStorage.getItem('sg_gemini_key') || '';
+  } else {
+    hint.style.background = '#fce4ec';
+    hint.style.borderColor = '#f8bbd0';
+    hint.style.color = '#880e4f';
+    hint.innerHTML = '💳 Claude は従量課金制です（1回 約1〜3円）<br>APIキーの取得先 → <a href="https://console.anthropic.com/" target="_blank" style="color:#1565c0">console.anthropic.com</a>';
+    label.textContent = 'Claude API キー（sk-ant-...）';
+    inp.placeholder = 'sk-ant-...';
+    inp.value = localStorage.getItem('sg_claude_key') || '';
+  }
+}
+
+// Load saved API key (default: Gemini)
+const savedGeminiKey = localStorage.getItem('sg_gemini_key');
+if (savedGeminiKey) document.getElementById('apiKey').value = savedGeminiKey;
 
 // ========================
 // Chip toggles (single select per group)
@@ -523,7 +568,10 @@ function toggleKey() {
 }
 function saveKey() {
   const k = document.getElementById('apiKey').value.trim();
-  if (k) { localStorage.setItem('sg_apiKey', k); showToast('APIキーを保存しました'); }
+  if (!k) return;
+  const storageKey = currentProvider === 'gemini' ? 'sg_gemini_key' : 'sg_claude_key';
+  localStorage.setItem(storageKey, k);
+  showToast('APIキーを保存しました');
 }
 
 // ========================
@@ -532,7 +580,12 @@ function saveKey() {
 async function generate() {
   const apiKey = document.getElementById('apiKey').value.trim();
   const clientText = document.getElementById('clientText').value.trim();
-  if (!apiKey) { alert('Claude APIキーを入力してください'); return; }
+  if (!apiKey) {
+    alert(currentProvider === 'gemini'
+      ? 'Gemini APIキーを入力してください（aistudio.google.com/apikey で無料取得）'
+      : 'Claude APIキーを入力してください');
+    return;
+  }
   if (!clientText) { alert('クライアントのテキストを入力してください'); return; }
 
   const bizType = document.getElementById('bizType').value.trim() || '一般ビジネス';
@@ -588,29 +641,52 @@ ${clientText}
 prompt_enは必ず英語で、画像の中に文字を入れないよう "no text, no letters" を必ず含めること。`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'anthropic-dangerous-allow-browser': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-opus-4-5',
-        max_tokens: 4000,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }]
-      })
-    });
+    let content;
 
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error?.message || `API Error ${res.status}`);
+    if (currentProvider === 'gemini') {
+      // ── Gemini API（無料）──
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      const res = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+          generationConfig: { maxOutputTokens: 4000, temperature: 0.7 }
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error?.message || `Gemini API Error ${res.status}`);
+      }
+      const data = await res.json();
+      content = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (!content) throw new Error('Geminiからの応答が空でした');
+
+    } else {
+      // ── Claude API（有料）──
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+          'anthropic-dangerous-allow-browser': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-opus-4-5',
+          max_tokens: 4000,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userPrompt }]
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error?.message || `Claude API Error ${res.status}`);
+      }
+      const data = await res.json();
+      content = data.content[0].text.trim();
     }
-
-    const data = await res.json();
-    const content = data.content[0].text.trim();
 
     // Extract JSON
     const jsonMatch = content.match(/\{[\s\S]*\}/);
