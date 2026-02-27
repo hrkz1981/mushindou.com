@@ -11,7 +11,7 @@ import streamlit as st
 import pandas as pd
 
 from categorizer import categorize, RULES
-from csv_parser import load_and_detect, parse_csv, FORMAT_NAMES
+from csv_parser import load_and_detect, parse_file, FORMAT_NAMES
 from national_averages import (
     get_national_average,
     get_income_reference,
@@ -177,8 +177,8 @@ def _tab_upload(nm: int) -> None:
         st.markdown("\n".join(f"- {v}" for v in FORMAT_NAMES.values() if v != "不明・手動マッピング"))
 
     uploaded = st.file_uploader(
-        "CSVファイルをドラッグ＆ドロップ（複数可）",
-        type=["csv", "tsv", "txt"],
+        "明細ファイルをドラッグ＆ドロップ（複数可）",
+        type=["csv", "tsv", "txt", "xlsx", "xls", "pdf"],
         accept_multiple_files=True,
         key="csv_uploader",
     )
@@ -197,7 +197,7 @@ def _tab_upload(nm: int) -> None:
 
         # 読み込み & フォーマット検出
         try:
-            raw_df, detected_fmt = load_and_detect(file_bytes)
+            raw_df, detected_fmt = load_and_detect(file_bytes, uf.name)
         except Exception as e:
             st.error(f"読み込みエラー: {e}")
             has_error = True
@@ -222,7 +222,7 @@ def _tab_upload(nm: int) -> None:
 
         # パース
         try:
-            parsed = parse_csv(file_bytes, selected_fmt, month=i + 1)
+            parsed = parse_file(file_bytes, selected_fmt, month=i + 1, filename=uf.name)
         except Exception as e:
             st.error(f"パースエラー: {e}")
             with st.expander("生データ（先頭5行）"):
