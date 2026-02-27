@@ -85,7 +85,7 @@ VALUES_LIST = [
 # ─────────────────────────────────────────────────────────────────────────────
 
 DEFAULTS: dict = {
-    "step": 1,
+    "step": 0,
     "profile": {},
     "num_months": 2,
     "raw_df": None,
@@ -112,6 +112,10 @@ STEP_NAMES = [
 
 
 def show_header() -> None:
+    # ランディングページはヘッダー不要（独自レイアウト）
+    if st.session_state.step == 0:
+        return
+
     st.title("💰 支出管理アナライザー")
     st.caption("全国平均 × あなたのプロフィールで、支出の適正度をチェックします")
 
@@ -130,6 +134,149 @@ def show_header() -> None:
                     unsafe_allow_html=True,
                 )
     st.divider()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ステップ 0 — ランディングページ
+# ─────────────────────────────────────────────────────────────────────────────
+
+def step0_landing() -> None:
+    # ── Hero ──────────────────────────────────────────────────
+    st.markdown(
+        """
+        <div style="text-align:center; padding: 48px 0 32px">
+          <div style="font-size:3.2em; margin-bottom:8px">💰</div>
+          <h1 style="font-size:2.4em; margin:0">支出管理アナライザー</h1>
+          <p style="font-size:1.15em; color:#555; margin-top:12px">
+            明細ファイルを投げるだけ。<br>
+            支出の全体像と、自分の価値観とのつながりが見える。
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # ── CTA（一番目立つ場所に置く）───────────────────────────
+    _, cta_col, _ = st.columns([2, 3, 2])
+    with cta_col:
+        if st.button("📊 分析を始める →", type="primary", use_container_width=True):
+            st.session_state.step = 1
+            st.rerun()
+        st.caption(
+            "<div style='text-align:center; color:#888'>所要時間 約5分 ／ データはブラウザ内のみで処理</div>",
+            unsafe_allow_html=True,
+        )
+
+    st.divider()
+
+    # ── できること（4枚のカード）────────────────────────────
+    st.subheader("こんなことができます")
+
+    features = [
+        (
+            "📂",
+            "明細をドロップするだけ",
+            "楽天カード・三井住友・ゆうちょ・PayPay など\n"
+            "**CSV・Excel・PDF** に対応。\n"
+            "複数ファイルをまとめて投げられます。",
+        ),
+        (
+            "🤖",
+            "自動でカテゴリ分類",
+            "「スーパー → 食費」「ガソリン → 交通費」\n"
+            "100以上のキーワードで自動判定。\n"
+            "あとから手修正も簡単です。",
+        ),
+        (
+            "📊",
+            "全国平均と比較",
+            "総務省 家計調査 2023 をもとに\n"
+            "**職種・年齢・家族構成・都道府県**で補正した\n"
+            "あなた専用の平均と比べられます。",
+        ),
+        (
+            "💫",
+            "価値観と支出を紐づける",
+            "「健康・美容」「家族・子育て」「趣味」など\n"
+            "自分の価値観と支出のつながりを確認。\n"
+            "お金の使い方の納得感が上がります。",
+        ),
+    ]
+
+    cols = st.columns(4)
+    for col, (icon, title, desc) in zip(cols, features):
+        with col:
+            with st.container(border=True):
+                st.markdown(
+                    f"<div style='font-size:2.2em; text-align:center; padding:8px 0'>{icon}</div>",
+                    unsafe_allow_html=True,
+                )
+                st.markdown(f"**{title}**")
+                # 改行を markdown の改行に変換
+                st.caption(desc.replace("\n", "  \n"))
+
+    st.divider()
+
+    # ── 使い方の流れ ─────────────────────────────────────────
+    st.subheader("使い方の流れ（5ステップ）")
+
+    flow = [
+        ("① プロフィール", "職種・年齢・家族構成\n都道府県・価値観を設定"),
+        ("② 明細を投げる",  "クレカ・銀行の明細を\nドラッグ＆ドロップ"),
+        ("③ カテゴリ確認",  "自動分類をざっと確認\n平均と見比べながら「納得度」を設定"),
+        ("④ 分析結果",      "全国平均との比較\n価値観マップを確認"),
+        ("⑤ エクスポート",  "CSVでダウンロード\nまたはスプレッドシートと連携"),
+    ]
+
+    step_cols = st.columns(5)
+    for i, (col, (title, desc)) in enumerate(zip(step_cols, flow)):
+        with col:
+            with st.container(border=True):
+                st.markdown(
+                    f"<div style='text-align:center'>"
+                    f"<span style='font-size:1.8em; font-weight:700; color:#1a73e8'>{i + 1}</span>"
+                    f"</div>",
+                    unsafe_allow_html=True,
+                )
+                st.markdown(f"**{title}**")
+                st.caption(desc.replace("\n", "  \n"))
+
+    st.divider()
+
+    # ── 対応フォーマット ─────────────────────────────────────
+    with st.expander("🏦 対応している金融機関・フォーマット"):
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown(
+                "**クレジットカード**\n"
+                "- 楽天カード（CSV / Excel）\n"
+                "- 三井住友カード（CSV）\n"
+                "- イオンカード（CSV）\n"
+                "- 汎用クレカ（利用日・店名・金額があるもの）\n\n"
+                "**家計簿アプリ**\n"
+                "- マネーフォワード ME（CSV）\n"
+                "- PayPay（CSV）"
+            )
+        with c2:
+            st.markdown(
+                "**銀行口座**\n"
+                "- 三菱UFJ銀行（CSV）\n"
+                "- 住信SBIネット銀行（CSV）\n"
+                "- ゆうちょ銀行（CSV）\n"
+                "- 汎用銀行（摘要・出金・入金があるもの）\n\n"
+                "**ファイル形式**\n"
+                "- CSV / TSV / TXT\n"
+                "- Excel（.xlsx / .xls）\n"
+                "- PDF（テキスト形式のもの）"
+            )
+
+    # ── 下にも CTA ───────────────────────────────────────────
+    st.divider()
+    _, cta2_col, _ = st.columns([2, 3, 2])
+    with cta2_col:
+        if st.button("📊 分析を始める →", type="primary", use_container_width=True, key="cta_bottom"):
+            st.session_state.step = 1
+            st.rerun()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1087,7 +1234,9 @@ def step5_export() -> None:
 show_header()
 
 step = st.session_state.step
-if step == 1:
+if step == 0:
+    step0_landing()
+elif step == 1:
     step1_profile()
 elif step == 2:
     step2_input()
