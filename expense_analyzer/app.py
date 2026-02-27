@@ -507,93 +507,201 @@ def _section_value_tags(grouped: pd.DataFrame) -> None:
     st.session_state.value_tags = value_tags
 
 
+def _category_prefix(grp: str) -> str:
+    """「食費（外食）」→「食費」のようにプレフィックスを返す。"""
+    for sep in ("（", "・"):
+        if sep in grp:
+            return grp.split(sep)[0]
+    return grp
+
+
 def step3_review() -> None:
-    st.header("カテゴリ確認・価値観タグ付け")
-    df = st.session_state.cat_df.copy()
+    st.header("カテゴリ確認 & 満足度設定")
+    profile = st.session_state.profile
     nm = st.session_state.num_months
 
     # ── 未分類の整理 ──────────────────────────────────────────
-    _section_uncategorized_fix(df)
+    _section_uncategorized_fix(st.session_state.cat_df.copy())
 
-    # ── トランザクション編集テーブル ──────────────────────────
-    st.subheader("トランザクション一覧（カテゴリを修正できます）")
+    # 未分類整理後に最新 df を取得
+    df = st.session_state.cat_df.copy()
 
-    with st.expander("💡 「支出パターン」の意味"):
-        st.markdown(
-            "支出パターンは **予算管理ツールとの連携** に使う分類です。  \n"
-            "自動設定されているので、基本は変更不要です。"
-        )
-        cols = st.columns(2)
-        items = list(ENEMY_HELP.items())
-        for i, (code, desc) in enumerate(items):
-            with cols[i % 2]:
-                label = ENEMY_LABEL.get(code, code)
-                st.markdown(f"**{label}**  \n{desc}")
-
-    edited = st.data_editor(
-        df[["摘要", "金額", "月", "group", "detail", "enemy"]],
-        column_config={
-            "摘要": st.column_config.TextColumn("摘要", disabled=True, width="medium"),
-            "金額": st.column_config.NumberColumn("金額（円）", format="%d", disabled=True),
-            "月": st.column_config.NumberColumn("月", disabled=True, width="small"),
-            "group": st.column_config.TextColumn("グループ", width="medium"),
-            "detail": st.column_config.TextColumn("詳細", width="medium"),
-            "enemy": st.column_config.SelectboxColumn(
-                "支出パターン",
-                options=ALL_ENEMIES,
-                width="medium",
-                help="📌毎月固定=家賃等 🔄毎月変動=食費等 📅不定固定=年会費等 🎲不定変動=旅行等",
-            ),
-        },
-        use_container_width=True,
-        num_rows="fixed",
-        height=380,
-        key="cat_editor",
-    )
-
-    st.divider()
-
-    # ── カテゴリ別サマリー + 満足度チェック ──────────────────
-    st.subheader("カテゴリ別サマリー & 満足度設定")
-    st.markdown(
-        "支出が全国平均を超えていても **「納得している」** にチェックを入れるとOK扱いになります。"
-    )
-
+    # ── グループ集計（件数付き）─────────────────────────────
     grouped = (
-        edited.groupby("group")
-        .agg(total=("金額", "sum"), detail=("detail", "first"), enemy=("enemy", "first"))
+        df.groupby("group")
+        .agg(
+            total=("金額", "sum"),
+            detail=("detail", "first"),
+            enemy=("enemy", "first"),
+            count=("金額", "count"),
+        )
         .reset_index()
     )
     grouped["monthly_avg"] = grouped["total"].abs() / nm
 
+    # 関連カテゴリ（同プレフィックス）のマップを作成
+    expense_grouped = grouped[~grouped["enemy"].isin(INCOME_ENEMY | INVEST_ENEMY)]
+    prefix_members: dict = {}
+    for grp in expense_grouped["group"]:
+        p = _category_prefix(grp)
+        prefix_members.setdefault(p, []).append(grp)
+
+    # プレフィックスごとの合計月支出
+    prefix_total: dict = {}
+    for _, row in expense_grouped.iterrows():
+        p = _category_prefix(row["group"])
+        prefix_total[p] = prefix_total.get(p, 0) + row["monthly_avg"]
+
+    # ── メイン：カテゴリカード ────────────────────────────────
+    st.markdown(
+        "自動分類されたカテゴリを確認してください。  \n"
+        "**全国平均と自分の支出を見比べて**、納得しているかをチェックします。"
+    )
+
     satisfaction = st.session_state.satisfaction.copy()
 
-    for _, row in grouped.iterrows():
-        enemy = row["enemy"]
-        if enemy in INCOME_ENEMY | INVEST_ENEMY:
-            continue
+    # 収入・投資はまとめて折りたたみ
+    inc_inv = grouped[grouped["enemy"].isin(INCOME_ENEMY | INVEST_ENEMY)]
+    if not inc_inv.empty:
+        with st.expander(f"💴 収入・投資（{len(inc_inv)}件）", expanded=False):
+            for _, r in inc_inv.iterrows():
+                icon = "📈" if r["enemy"] in INVEST_ENEMY else "💴"
+                c1, c2 = st.columns([5, 2])
+                with c1:
+                    st.write(f"{icon} **{r['group']}**")
+                    st.caption(ENEMY_LABEL.get(r["enemy"], r["enemy"]))
+                with c2:
+                    st.metric("月平均", f"{r['monthly_avg']:,.0f}円")
 
+    st.divider()
+
+    # 支出カテゴリ：カードで表示
+    for _, row in expense_grouped.iterrows():
         grp = row["group"]
+        enemy = row["enemy"]
         avg = row["monthly_avg"]
+        cnt = int(row["count"])
         safe_key = grp[:40].replace(" ", "_")
+        prefix = _category_prefix(grp)
+        related = [g for g in prefix_members.get(prefix, []) if g != grp]
 
-        c1, c2, c3 = st.columns([4, 2, 3])
-        with c1:
-            st.write(f"**{grp}**")
-            friendly = ENEMY_LABEL.get(enemy, enemy)
-            tip = ENEMY_HELP.get(enemy, "")
-            st.caption(f"{friendly}  \n{tip}")
-        with c2:
-            st.metric("月平均", f"{avg:,.0f} 円")
-        with c3:
-            satisfied = st.checkbox(
-                "この支出は納得している ✅",
-                value=satisfaction.get(grp, False),
-                key=f"sat_{safe_key}",
+        # 全国平均を取得
+        nat_avg = get_national_average(
+            category_name=grp,
+            family_type=profile.get("family", ""),
+            prefecture=profile.get("prefecture", ""),
+            monthly_income=profile.get("monthly_income", 0),
+            occupation=profile.get("occupation", ""),
+            age=profile.get("age", ""),
+        )
+
+        ratio = avg / nat_avg if (nat_avg and nat_avg > 0) else None
+        satisfied = satisfaction.get(grp, False)
+
+        if satisfied:
+            status_icon, status_label, status_color = "💙", "納得済み（OK）", "blue"
+        elif ratio is None:
+            status_icon, status_label, status_color = "⬜", "比較データなし", "gray"
+        else:
+            si, sl = _status(ratio)
+            status_icon, status_label = si, sl
+            status_color = (
+                "red" if si == "🔴" else
+                "orange" if si == "⚠️" else
+                "green"
             )
-            satisfaction[grp] = satisfied
+
+        with st.container(border=True):
+            # ── タイトル行
+            t1, t2 = st.columns([7, 2])
+            with t1:
+                st.markdown(f"{status_icon} **{grp}**")
+                st.caption(
+                    f"{ENEMY_LABEL.get(enemy, enemy)}  ·  {cnt}件"
+                )
+            with t2:
+                new_sat = st.checkbox(
+                    "納得している ✅",
+                    value=satisfied,
+                    key=f"sat_{safe_key}",
+                )
+                satisfaction[grp] = new_sat
+
+            # ── 数値比較行
+            m1, m2, m3 = st.columns([2, 2, 3])
+            with m1:
+                st.metric("あなた/月", f"{avg:,.0f}円")
+            with m2:
+                if nat_avg:
+                    delta_val = int(avg - nat_avg)
+                    delta_str = f"{'+' if delta_val > 0 else ''}{delta_val:,}円"
+                    st.metric(
+                        "全国平均/月",
+                        f"{nat_avg:,.0f}円",
+                        delta=delta_str,
+                        delta_color="inverse",
+                    )
+                else:
+                    st.metric("全国平均/月", "—")
+            with m3:
+                if new_sat:
+                    st.info("💙 OK（納得済み）")
+                elif status_color == "red":
+                    st.error(status_label)
+                elif status_color == "orange":
+                    st.warning(status_label)
+                elif nat_avg:
+                    st.success(status_label)
+                else:
+                    st.caption(status_label)
+
+            # ── 関連カテゴリの警告
+            if related:
+                related_total = prefix_total.get(prefix, 0)
+                names = "、".join(related)
+                st.caption(
+                    f"💡 「{prefix}」関連: {names} も同グループです"
+                    f"（{prefix}合計 月 {related_total:,.0f}円）"
+                )
 
     st.session_state.satisfaction = satisfaction
+
+    st.divider()
+
+    # ── トランザクション詳細（折りたたみ・確認・修正用）────────
+    with st.expander("🔍 トランザクション詳細を確認・修正する"):
+        st.caption("分類が間違っていると思う場合はここで変更できます。")
+
+        with st.expander("💡 「支出パターン」の意味"):
+            cols_h = st.columns(2)
+            for i, (code, desc) in enumerate(ENEMY_HELP.items()):
+                with cols_h[i % 2]:
+                    st.markdown(f"**{ENEMY_LABEL.get(code, code)}**  \n{desc}")
+
+        edited = st.data_editor(
+            df[["摘要", "金額", "月", "group", "detail", "enemy"]],
+            column_config={
+                "摘要": st.column_config.TextColumn("摘要", disabled=True, width="medium"),
+                "金額": st.column_config.NumberColumn("金額（円）", format="%d", disabled=True),
+                "月": st.column_config.NumberColumn("月", disabled=True, width="small"),
+                "group": st.column_config.TextColumn("グループ", width="medium"),
+                "detail": st.column_config.TextColumn("詳細", width="medium"),
+                "enemy": st.column_config.SelectboxColumn(
+                    "支出パターン",
+                    options=ALL_ENEMIES,
+                    width="medium",
+                    help="📌毎月固定=家賃等 🔄毎月変動=食費等 📅不定固定=年会費等 🎲不定変動=旅行等",
+                ),
+            },
+            use_container_width=True,
+            num_rows="fixed",
+            height=360,
+            key="cat_editor",
+        )
+        if st.button("✅ 変更を反映", key="apply_detail_edit"):
+            st.session_state.cat_df = edited.reset_index(drop=True)
+            st.success("反映しました。ページが更新されます。")
+            st.rerun()
 
     st.divider()
 
@@ -608,7 +716,6 @@ def step3_review() -> None:
             st.rerun()
     with c2:
         if st.button("分析結果を見る →", type="primary"):
-            st.session_state.cat_df = edited.reset_index(drop=True)
             st.session_state.step = 4
             st.rerun()
 
