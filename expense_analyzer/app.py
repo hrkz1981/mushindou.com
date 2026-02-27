@@ -1,12 +1,13 @@
 """
 支出管理アナライザー — Streamlit アプリ
 5ステップ:
-  1. プロフィール設定
+  1. プロフィール設定（価値観も設定）
   2. 明細入力（2ヶ月分）
-  3. カテゴリ確認・満足度設定
-  4. 分析結果（全国平均比較）
-  5. achieve 形式エクスポート
+  3. カテゴリ確認・未分類整理・価値観タグ付け
+  4. 分析結果（全国平均比較・価値観マップ）
+  5. エクスポート（シンプルCSV / achieve 形式）
 """
+import io
 import streamlit as st
 import pandas as pd
 
@@ -33,6 +34,31 @@ st.set_page_config(
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
+# 定数
+# ─────────────────────────────────────────────────────────────────────────────
+
+INCOME_ENEMY = {"収入・予算内", "収入・予算外"}
+INVEST_ENEMY = {"投資"}
+
+ALL_ENEMIES = [
+    "1 毎月・固定", "2 毎月・変動", "3 不定・固定", "4 不定・変動",
+    "投資", "収入・予算内", "収入・予算外",
+]
+
+VALUES_LIST = [
+    "(未設定)",
+    "🏥 健康・美容",
+    "👨‍👩‍👧 家族・子育て",
+    "📚 自己成長・学習",
+    "🎮 娯楽・趣味",
+    "✈️ 体験・思い出",
+    "💼 仕事・キャリア",
+    "🏠 生活・安心",
+    "💰 節約・資産形成",
+    "🤝 人とのつながり",
+]
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Session state 初期化
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -40,9 +66,10 @@ DEFAULTS: dict = {
     "step": 1,
     "profile": {},
     "num_months": 2,
-    "raw_df": None,      # 入力済み明細 DataFrame
-    "cat_df": None,      # カテゴリ付き DataFrame
-    "satisfaction": {},  # {group_name: bool}
+    "raw_df": None,
+    "cat_df": None,
+    "satisfaction": {},
+    "value_tags": {},   # {group_name: value_label}
 }
 
 for k, v in DEFAULTS.items():
@@ -60,9 +87,6 @@ STEP_NAMES = [
     "④ 分析結果",
     "⑤ エクスポート",
 ]
-
-INCOME_ENEMY = {"収入・予算内", "収入・予算外"}
-INVEST_ENEMY = {"投資"}
 
 
 def show_header() -> None:
@@ -92,7 +116,7 @@ def show_header() -> None:
 
 def step1_profile() -> None:
     st.header("プロフィール設定")
-    st.markdown("入力内容は全国平均の補正にのみ使用します。")
+    st.markdown("入力内容は全国平均の補正と価値観マップにのみ使用します。")
 
     col_l, col_r = st.columns(2)
 
@@ -102,6 +126,15 @@ def step1_profile() -> None:
         age = st.selectbox("年齢層", AGE_LIST)
         family = st.selectbox("家族構成", FAMILY_TYPE_LIST)
         prefecture = st.selectbox("居住都道府県", PREFECTURE_LIST)
+
+        st.subheader("明細の月数")
+        num_months = st.radio(
+            "入力する明細は何ヶ月分ですか？",
+            options=[1, 2],
+            index=1,
+            horizontal=True,
+            help="2ヶ月の平均を使うと精度が上がります",
+        )
 
     with col_r:
         st.subheader("収入情報")
@@ -127,13 +160,18 @@ def step1_profile() -> None:
             monthly_income = ref["reference"]
             st.caption(f"参考値を使用: {monthly_income:,} 円/月")
 
-        st.subheader("明細の月数")
-        num_months = st.radio(
-            "入力する明細は何ヶ月分ですか？",
-            options=[1, 2],
-            index=1,
-            horizontal=True,
-            help="2ヶ月の平均を使うと精度が上がります",
+        st.divider()
+
+        st.subheader("💫 大切にしていること（任意）")
+        st.caption(
+            "支出を振り返るとき「自分の価値観に合っているか」を確認できます。\n"
+            "後から変更もできます。"
+        )
+        priority_values = st.multiselect(
+            "大切にしていること（複数選択可）",
+            options=VALUES_LIST[1:],  # "(未設定)" を除く
+            default=st.session_state.profile.get("priority_values", []),
+            help="ここで選んだ価値観は④分析結果の「価値観マップ」で ⭐ 表示されます",
         )
 
     st.divider()
@@ -144,6 +182,7 @@ def step1_profile() -> None:
             "family": family,
             "prefecture": prefecture,
             "monthly_income": monthly_income,
+            "priority_values": priority_values,
         }
         st.session_state.num_months = num_months
         st.session_state.step = 2
@@ -169,7 +208,7 @@ def _proceed_to_step3(combined: pd.DataFrame) -> None:
 def _tab_upload(nm: int) -> None:
     """CSV アップロードタブの中身。"""
     st.markdown(
-        f"クレカ・銀行・PayPay など **{nm}ヶ月分** の明細 CSV をまとめてアップロードしてください。  \n"
+        f"クレカ・銀行・PayPay など **{nm}ヶ月分** の明細をまとめてアップロードしてください。  \n"
         "複数ファイル・複数金融機関を一度に投げられます。"
     )
 
@@ -195,7 +234,6 @@ def _tab_upload(nm: int) -> None:
         st.subheader(f"📄 {uf.name}")
         file_bytes = uf.read()
 
-        # 読み込み & フォーマット検出
         try:
             raw_df, detected_fmt = load_and_detect(file_bytes, uf.name)
         except Exception as e:
@@ -203,7 +241,6 @@ def _tab_upload(nm: int) -> None:
             has_error = True
             continue
 
-        # フォーマット表示 & 手動上書き
         fmt_keys = [k for k in FORMAT_NAMES if k != "unknown"]
         if detected_fmt != "unknown":
             st.success(f"✓ 自動検出: **{FORMAT_NAMES[detected_fmt]}**")
@@ -220,7 +257,6 @@ def _tab_upload(nm: int) -> None:
             key=f"fmt_{i}_{uf.name}",
         )
 
-        # パース
         try:
             parsed = parse_file(file_bytes, selected_fmt, month=i + 1, filename=uf.name)
         except Exception as e:
@@ -316,7 +352,7 @@ def step2_input() -> None:
     nm = st.session_state.num_months
     st.header("明細入力")
 
-    tab_upload, tab_manual = st.tabs(["📂 CSV アップロード", "✏️ 手動入力"])
+    tab_upload, tab_manual = st.tabs(["📂 ファイルアップロード", "✏️ 手動入力"])
     with tab_upload:
         _tab_upload(nm)
     with tab_manual:
@@ -324,20 +360,134 @@ def step2_input() -> None:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# ステップ 3 — カテゴリ確認・満足度設定
+# ステップ 3 — カテゴリ確認・未分類整理・価値観タグ付け
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _section_uncategorized_fix(df: pd.DataFrame) -> None:
+    """
+    未分類アイテムの一括整理UI。
+    修正がある場合は session_state.cat_df を更新して rerun する。
+    """
+    uncats = df[df["group"] == "未分類"]
+    if uncats.empty:
+        return
+
+    count = len(uncats)
+    unique_descs = (
+        uncats.groupby("摘要")
+        .agg(件数=("金額", "count"), 合計=("金額", "sum"))
+        .reset_index()
+        .sort_values("件数", ascending=False)
+    )
+
+    with st.expander(
+        f"⚠️ 未分類が **{count} 件** あります — まとめて整理しましょう（任意）",
+        expanded=True,
+    ):
+        st.markdown(
+            "グループ名と種別を入力して **「一括適用」** を押すと分類されます。  \n"
+            "入力しない行はスキップされます。"
+        )
+
+        grp_inputs = {}
+        enemy_inputs = {}
+
+        for _, row in unique_descs.iterrows():
+            desc = str(row["摘要"])
+            total_amt = int(row["合計"])
+            cnt = int(row["件数"])
+            safe_key = desc[:40].replace(" ", "_")
+
+            c1, c2, c3 = st.columns([3, 3, 3])
+            with c1:
+                st.markdown(f"**{desc}**")
+                st.caption(f"{cnt}件 / 合計 {total_amt:,}円")
+            with c2:
+                grp_inputs[desc] = st.text_input(
+                    "グループ名",
+                    placeholder="例: 食費（外食）",
+                    key=f"uc_grp_{safe_key}",
+                    label_visibility="collapsed",
+                )
+            with c3:
+                enemy_inputs[desc] = st.selectbox(
+                    "種別",
+                    options=ALL_ENEMIES,
+                    key=f"uc_enemy_{safe_key}",
+                    label_visibility="collapsed",
+                )
+
+        if st.button("✅ 未分類を一括適用", type="secondary", key="apply_uncat"):
+            new_df = st.session_state.cat_df.copy()
+            changed = 0
+            for desc, grp in grp_inputs.items():
+                grp = grp.strip()
+                if grp:
+                    mask = new_df["摘要"] == desc
+                    new_df.loc[mask, "group"] = grp
+                    new_df.loc[mask, "detail"] = grp
+                    new_df.loc[mask, "enemy"] = enemy_inputs.get(desc, "4 不定・変動")
+                    changed += 1
+            if changed:
+                st.session_state.cat_df = new_df.reset_index(drop=True)
+                st.success(f"✅ {changed} 種類の摘要を分類しました")
+                st.rerun()
+            else:
+                st.info("グループ名を入力してください。")
+
+
+def _section_value_tags(grouped: pd.DataFrame) -> None:
+    """
+    価値観タグ付けUI。
+    各支出グループに「なぜ使っているか」の価値観をひも付ける。
+    """
+    expense_groups = grouped[~grouped["enemy"].isin(INCOME_ENEMY | INVEST_ENEMY)]
+    if expense_groups.empty:
+        return
+
+    st.subheader("💫 価値観タグ付け")
+    st.markdown(
+        "各支出グループに「なぜ使っているか」の価値観をタグ付けします。  \n"
+        "④分析結果で **価値観マップ** として確認できます。"
+    )
+
+    value_tags = st.session_state.value_tags.copy()
+
+    cols = st.columns(2)
+    for idx, (_, row) in enumerate(expense_groups.iterrows()):
+        grp = row["group"]
+        monthly = row["monthly_avg"]
+        current_val = value_tags.get(grp, "(未設定)")
+        safe_key = grp[:40].replace(" ", "_")
+
+        with cols[idx % 2]:
+            with st.container(border=True):
+                c1, c2 = st.columns([2, 3])
+                with c1:
+                    st.write(f"**{grp}**")
+                    st.caption(f"月 {monthly:,.0f}円")
+                with c2:
+                    val_idx = VALUES_LIST.index(current_val) if current_val in VALUES_LIST else 0
+                    value_tags[grp] = st.selectbox(
+                        "価値観",
+                        options=VALUES_LIST,
+                        index=val_idx,
+                        key=f"vtag_{safe_key}",
+                        label_visibility="collapsed",
+                    )
+
+    st.session_state.value_tags = value_tags
+
+
 def step3_review() -> None:
-    st.header("カテゴリ確認・満足度設定")
+    st.header("カテゴリ確認・価値観タグ付け")
     df = st.session_state.cat_df.copy()
     nm = st.session_state.num_months
 
-    all_enemies = [
-        "収入・予算内", "収入・予算外", "投資",
-        "1 毎月・固定", "2 毎月・変動", "3 不定・固定", "4 不定・変動",
-    ]
+    # ── 未分類の整理 ──────────────────────────────────────────
+    _section_uncategorized_fix(df)
 
-    # ── トランザクション編集テーブル
+    # ── トランザクション編集テーブル ──────────────────────────
     st.subheader("トランザクション一覧（カテゴリを修正できます）")
     edited = st.data_editor(
         df[["摘要", "金額", "月", "group", "detail", "enemy"]],
@@ -348,7 +498,7 @@ def step3_review() -> None:
             "group": st.column_config.TextColumn("グループ", width="medium"),
             "detail": st.column_config.TextColumn("詳細", width="medium"),
             "enemy": st.column_config.SelectboxColumn(
-                "敵タイプ", options=all_enemies, width="medium"
+                "種別", options=ALL_ENEMIES, width="medium"
             ),
         },
         use_container_width=True,
@@ -359,7 +509,7 @@ def step3_review() -> None:
 
     st.divider()
 
-    # ── カテゴリ別サマリー + 満足度チェック
+    # ── カテゴリ別サマリー + 満足度チェック ──────────────────
     st.subheader("カテゴリ別サマリー & 満足度設定")
     st.markdown(
         "支出が全国平均を超えていても **「納得している」** にチェックを入れるとOK扱いになります。"
@@ -381,6 +531,7 @@ def step3_review() -> None:
 
         grp = row["group"]
         avg = row["monthly_avg"]
+        safe_key = grp[:40].replace(" ", "_")
 
         c1, c2, c3 = st.columns([4, 2, 3])
         with c1:
@@ -392,11 +543,16 @@ def step3_review() -> None:
             satisfied = st.checkbox(
                 "この支出は納得している ✅",
                 value=satisfaction.get(grp, False),
-                key=f"sat_{grp}",
+                key=f"sat_{safe_key}",
             )
             satisfaction[grp] = satisfied
 
     st.session_state.satisfaction = satisfaction
+
+    st.divider()
+
+    # ── 価値観タグ付け ────────────────────────────────────────
+    _section_value_tags(grouped)
 
     st.divider()
     c1, c2 = st.columns([1, 5])
@@ -415,7 +571,7 @@ def step3_review() -> None:
 # ステップ 4 — 分析結果
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _status(ratio: float) -> tuple[str, str]:
+def _status(ratio: float) -> tuple:
     """(アイコン, ラベル) を返す。"""
     if ratio <= 0.80:
         return "✅", f"余裕あり（平均の {ratio*100:.0f}%）"
@@ -427,6 +583,85 @@ def _status(ratio: float) -> tuple[str, str]:
         return "🔴", f"超過（平均の {ratio*100:.0f}%）"
 
 
+def _section_value_map(grouped: pd.DataFrame, nm: int, profile: dict, value_tags: dict) -> None:
+    """
+    価値観マップ：価値観タグ別に支出を集計し、
+    優先価値観との一致度を可視化するセクション。
+    """
+    priority_values = profile.get("priority_values", [])
+    expense_rows = grouped[~grouped["enemy"].isin(INCOME_ENEMY | INVEST_ENEMY)].copy()
+
+    if expense_rows.empty:
+        return
+
+    expense_rows["value"] = expense_rows["group"].map(
+        lambda g: value_tags.get(g, "(未設定)")
+    )
+
+    value_summary = (
+        expense_rows.groupby("value")
+        .agg(
+            月支出合計=("monthly_avg", "sum"),
+            グループ数=("group", "count"),
+        )
+        .reset_index()
+        .sort_values("月支出合計", ascending=False)
+    )
+
+    total_expense = value_summary["月支出合計"].sum()
+
+    st.subheader("💫 価値観マップ")
+    st.markdown(
+        "支出を「何のために使っているか」の価値観で集計しています。  \n"
+        "⭐ は①プロフィールで選んだ優先価値観です。"
+    )
+
+    if not priority_values:
+        st.caption("プロフィールで「大切にしていること」を設定すると ⭐ 表示が使えます")
+
+    for _, row in value_summary.iterrows():
+        val = row["value"]
+        amt = row["月支出合計"]
+        grp_count = row["グループ数"]
+        pct = amt / total_expense if total_expense > 0 else 0
+
+        is_priority = val in priority_values
+        is_unset = val == "(未設定)"
+        icon = "⭐" if is_priority else ("❓" if is_unset else "◆")
+
+        with st.container(border=True):
+            c1, c2, c3 = st.columns([4, 2, 3])
+            with c1:
+                label = f"{icon} **{val}**"
+                if is_priority:
+                    label += " ← 優先"
+                st.markdown(label)
+                # このvalueに属するグループを表示
+                groups_in_val = expense_rows[expense_rows["value"] == val]["group"].tolist()
+                st.caption("  ・".join(groups_in_val))
+            with c2:
+                st.metric("月支出", f"{amt:,.0f}円")
+                st.caption(f"{pct*100:.1f}%")
+            with c3:
+                st.progress(min(pct, 1.0))
+
+    # 優先価値観で未タグのものを警告
+    unmatched_priorities = [v for v in priority_values if v not in value_summary["value"].values]
+    if unmatched_priorities:
+        st.info(
+            "💡 以下の優先価値観に対応する支出カテゴリがタグ付けされていません：\n"
+            + "、".join(unmatched_priorities)
+        )
+
+    # 未設定グループを表示
+    unset_groups = expense_rows[expense_rows["value"] == "(未設定)"]["group"].tolist()
+    if unset_groups:
+        with st.expander(f"❓ 価値観未設定のグループ（{len(unset_groups)}件）"):
+            for g in unset_groups:
+                st.write(f"- {g}")
+            st.caption("③カテゴリ確認 → 価値観タグ付け で設定できます")
+
+
 def step4_analysis() -> None:
     st.header("分析結果")
 
@@ -434,6 +669,7 @@ def step4_analysis() -> None:
     profile = st.session_state.profile
     nm = st.session_state.num_months
     satisfaction = st.session_state.satisfaction
+    value_tags = st.session_state.value_tags
 
     grouped = (
         df.groupby("group")
@@ -448,11 +684,11 @@ def step4_analysis() -> None:
         st.markdown(
             f"| 項目 | 値 |\n"
             f"|------|----|\n"
-            f"| 職種 | {p['occupation']} |\n"
-            f"| 年齢 | {p['age']} |\n"
-            f"| 家族構成 | {p['family']} |\n"
-            f"| 都道府県 | {p['prefecture']} |\n"
-            f"| 月収（手取り） | {p['monthly_income']:,} 円 |"
+            f"| 職種 | {p.get('occupation', '—')} |\n"
+            f"| 年齢 | {p.get('age', '—')} |\n"
+            f"| 家族構成 | {p.get('family', '—')} |\n"
+            f"| 都道府県 | {p.get('prefecture', '—')} |\n"
+            f"| 月収（手取り） | {p.get('monthly_income', 0):,} 円 |"
         )
 
     # ── 収入セクション
@@ -479,8 +715,8 @@ def step4_analysis() -> None:
 
     st.divider()
 
-    # ── 支出分析
-    st.subheader("💸 支出分析")
+    # ── 支出分析（全国平均比較）
+    st.subheader("💸 支出分析（全国平均比較）")
     expense_rows = grouped[~grouped["enemy"].isin(INCOME_ENEMY | INVEST_ENEMY)]
 
     total_user = 0
@@ -496,18 +732,17 @@ def step4_analysis() -> None:
 
         nat_avg = get_national_average(
             category_name=grp,
-            family_type=profile["family"],
-            prefecture=profile["prefecture"],
-            monthly_income=profile["monthly_income"],
-            occupation=profile["occupation"],
-            age=profile["age"],
+            family_type=profile.get("family", ""),
+            prefecture=profile.get("prefecture", ""),
+            monthly_income=profile.get("monthly_income", 0),
+            occupation=profile.get("occupation", ""),
+            age=profile.get("age", ""),
         )
 
         total_user += avg
         if nat_avg:
             total_national += nat_avg
 
-        # ステータス判定
         if nat_avg is None:
             icon, label = "⬜", "比較データなし"
             color = "gray"
@@ -527,7 +762,9 @@ def step4_analysis() -> None:
         with st.container(border=True):
             c1, c2, c3, c4 = st.columns([3, 2, 2, 3])
             with c1:
-                st.write(f"{icon} **{grp}**")
+                val_tag = value_tags.get(grp, "")
+                tag_str = f"  `{val_tag}`" if val_tag and val_tag != "(未設定)" else ""
+                st.write(f"{icon} **{grp}**{tag_str}")
                 st.caption(enemy)
             with c2:
                 st.metric("あなた/月", f"{avg:,.0f} 円")
@@ -571,13 +808,18 @@ def step4_analysis() -> None:
         st.warning(f"⚠️ 全国平均を超過している項目が **{issue_count} 件** あります。")
 
     st.divider()
+
+    # ── 価値観マップ
+    _section_value_map(grouped, nm, profile, value_tags)
+
+    st.divider()
     c1, c2 = st.columns([1, 5])
     with c1:
         if st.button("← 戻る"):
             st.session_state.step = 3
             st.rerun()
     with c2:
-        if st.button("achieve 形式でエクスポート →", type="primary"):
+        if st.button("エクスポート →", type="primary"):
             st.session_state.step = 5
             st.rerun()
 
@@ -587,14 +829,11 @@ def step4_analysis() -> None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def step5_export() -> None:
-    st.header("achieve 形式エクスポート")
-    st.markdown(
-        "下のテキストを **全選択→コピー** して、Googleスプレッドシートの "
-        "`achieve` 範囲の左上セルに **貼り付け** してください。"
-    )
+    st.header("エクスポート")
 
     df = st.session_state.cat_df
     nm = st.session_state.num_months
+    value_tags = st.session_state.value_tags
 
     grouped = (
         df.groupby("group")
@@ -602,38 +841,86 @@ def step5_export() -> None:
         .reset_index()
     )
     grouped["monthly_avg"] = grouped["total"].abs() / nm
+    grouped["value"] = grouped["group"].map(lambda g: value_tags.get(g, "(未設定)"))
 
-    monthly_averages = {
-        r["group"]: {
-            "detail": r["detail"],
-            "enemy": r["enemy"],
-            "monthly_avg": r["monthly_avg"],
-        }
-        for _, r in grouped.iterrows()
-    }
+    # ═════════════════════════════════════════
+    # A) シンプルCSV（誰でも使える）
+    # ═════════════════════════════════════════
+    st.subheader("📊 シンプル分析データ（CSV）")
+    st.caption("ExcelやGoogleスプレッドシートで開けます。特別な連携ツールは不要です。")
 
-    tsv = generate_achieve_tsv(monthly_averages)
+    export_df = grouped.rename(columns={
+        "group": "グループ",
+        "detail": "詳細",
+        "enemy": "種別",
+        "monthly_avg": "月平均金額（円）",
+        "value": "価値観タグ",
+        "total": "合計金額（円）",
+    })[["グループ", "詳細", "種別", "月平均金額（円）", "価値観タグ"]].copy()
+    export_df["月平均金額（円）"] = export_df["月平均金額（円）"].round(0).astype(int)
 
-    st.text_area(
-        "コピー用テキスト（Ctrl+A → Ctrl+C）",
-        value=tsv,
-        height=320,
-    )
+    st.dataframe(export_df, use_container_width=True)
 
+    csv_bytes = export_df.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
     st.download_button(
-        label="📥 ファイルとしてダウンロード",
-        data=tsv.encode("utf-8-sig"),
-        file_name="achieve_data.tsv",
-        mime="text/tab-separated-values",
+        label="📥 CSVをダウンロード（Excel/スプレッドシートで開く）",
+        data=csv_bytes,
+        file_name="expense_summary.csv",
+        mime="text/csv",
+        type="primary",
     )
 
-    st.info(
-        "**貼り付け手順**\n\n"
-        "1. 上のテキストを全選択（Ctrl+A）してコピー（Ctrl+C）\n"
-        "2. Googleスプレッドシートの `achieve` 範囲の左上セルをクリック\n"
-        "3. 貼り付け（Ctrl+V）\n"
-        "4. `switch` セルを TRUE にすると予算計画シートへ転記されます"
-    )
+    st.divider()
+
+    # ═════════════════════════════════════════
+    # B) achieve 形式（Google Sheets 連携用）
+    # ═════════════════════════════════════════
+    with st.expander("🔧 Google Sheets 予算管理ツールと連携する（achieve 形式）"):
+        st.markdown(
+            """
+**achieve 形式とは？**
+
+このアプリは、Googleスプレッドシートで動作する専用の予算管理ツールと連携できます。
+そのツールには `achieve` という名前付きセルがあり、以下の列構成でデータを貼り付けます：
+
+| 列 | 内容 |
+|----|------|
+| group | カテゴリグループ名 |
+| detail | 詳細名 |
+| enemy | 種別（毎月固定・変動など） |
+| average | 月平均金額 |
+
+**貼り付け手順：**
+1. 下のテキストを全選択（Ctrl+A）してコピー（Ctrl+C）
+2. Googleスプレッドシートの `achieve` 範囲の **左上セル** をクリック
+3. 貼り付け（Ctrl+V）
+4. `switch` セルを TRUE にすると予算計画シートへ転記されます
+            """
+        )
+
+        monthly_averages = {
+            r["group"]: {
+                "detail": r["detail"],
+                "enemy": r["enemy"],
+                "monthly_avg": r["monthly_avg"],
+            }
+            for _, r in grouped.iterrows()
+        }
+
+        tsv = generate_achieve_tsv(monthly_averages)
+
+        st.text_area(
+            "コピー用テキスト（Ctrl+A → Ctrl+C）",
+            value=tsv,
+            height=280,
+        )
+
+        st.download_button(
+            label="📥 achieve.tsv をダウンロード",
+            data=tsv.encode("utf-8-sig"),
+            file_name="achieve_data.tsv",
+            mime="text/tab-separated-values",
+        )
 
     if st.button("← 戻る"):
         st.session_state.step = 4
