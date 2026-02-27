@@ -45,6 +45,28 @@ ALL_ENEMIES = [
     "投資", "収入・予算内", "収入・予算外",
 ]
 
+# 支出パターンの表示ラベル（UI用）
+ENEMY_LABEL = {
+    "1 毎月・固定":  "📌 毎月・固定",
+    "2 毎月・変動":  "🔄 毎月・変動",
+    "3 不定・固定":  "📅 不定期・固定",
+    "4 不定・変動":  "🎲 不定期・変動",
+    "投資":          "📈 投資・積立",
+    "収入・予算内":  "💴 給与収入",
+    "収入・予算外":  "💴 副業・雑収入",
+}
+
+# 支出パターンの説明（ヘルプ用）
+ENEMY_HELP = {
+    "1 毎月・固定": "毎月ほぼ同じ金額が出ていく支出（家賃・サブスク・通信費など）",
+    "2 毎月・変動": "毎月使うが金額が変わる支出（食費・光熱費・日用品など）",
+    "3 不定・固定": "不定期だが金額はほぼ同じ支出（年会費・車検・保険年払いなど）",
+    "4 不定・変動": "不定期で金額も変わる支出（旅行・衣服・娯楽・外食など）",
+    "投資":         "将来のための積立・投資（NISA・iDeCo・株式など）",
+    "収入・予算内": "メインの収入（給与・賞与など）",
+    "収入・予算外": "サブの収入（副業・雑収入・売却益など）",
+}
+
 VALUES_LIST = [
     "(未設定)",
     "🏥 健康・美容",
@@ -385,9 +407,15 @@ def _section_uncategorized_fix(df: pd.DataFrame) -> None:
         expanded=True,
     ):
         st.markdown(
-            "グループ名と種別を入力して **「一括適用」** を押すと分類されます。  \n"
+            "**グループ名**（自由記入）と **支出パターン** を入力して **「一括適用」** を押してください。  \n"
             "入力しない行はスキップされます。"
         )
+        with st.expander("支出パターンの選び方"):
+            for code, desc in ENEMY_HELP.items():
+                if code in ("収入・予算内", "収入・予算外", "投資"):
+                    continue
+                label = ENEMY_LABEL.get(code, code)
+                st.markdown(f"- **{label}** — {desc}")
 
         grp_inputs = {}
         enemy_inputs = {}
@@ -489,6 +517,19 @@ def step3_review() -> None:
 
     # ── トランザクション編集テーブル ──────────────────────────
     st.subheader("トランザクション一覧（カテゴリを修正できます）")
+
+    with st.expander("💡 「支出パターン」の意味"):
+        st.markdown(
+            "支出パターンは **予算管理ツールとの連携** に使う分類です。  \n"
+            "自動設定されているので、基本は変更不要です。"
+        )
+        cols = st.columns(2)
+        items = list(ENEMY_HELP.items())
+        for i, (code, desc) in enumerate(items):
+            with cols[i % 2]:
+                label = ENEMY_LABEL.get(code, code)
+                st.markdown(f"**{label}**  \n{desc}")
+
     edited = st.data_editor(
         df[["摘要", "金額", "月", "group", "detail", "enemy"]],
         column_config={
@@ -498,7 +539,10 @@ def step3_review() -> None:
             "group": st.column_config.TextColumn("グループ", width="medium"),
             "detail": st.column_config.TextColumn("詳細", width="medium"),
             "enemy": st.column_config.SelectboxColumn(
-                "種別", options=ALL_ENEMIES, width="medium"
+                "支出パターン",
+                options=ALL_ENEMIES,
+                width="medium",
+                help="📌毎月固定=家賃等 🔄毎月変動=食費等 📅不定固定=年会費等 🎲不定変動=旅行等",
             ),
         },
         use_container_width=True,
@@ -536,7 +580,9 @@ def step3_review() -> None:
         c1, c2, c3 = st.columns([4, 2, 3])
         with c1:
             st.write(f"**{grp}**")
-            st.caption(enemy)
+            friendly = ENEMY_LABEL.get(enemy, enemy)
+            tip = ENEMY_HELP.get(enemy, "")
+            st.caption(f"{friendly}  \n{tip}")
         with c2:
             st.metric("月平均", f"{avg:,.0f} 円")
         with c3:
@@ -765,7 +811,7 @@ def step4_analysis() -> None:
                 val_tag = value_tags.get(grp, "")
                 tag_str = f"  `{val_tag}`" if val_tag and val_tag != "(未設定)" else ""
                 st.write(f"{icon} **{grp}**{tag_str}")
-                st.caption(enemy)
+                st.caption(ENEMY_LABEL.get(enemy, enemy))
             with c2:
                 st.metric("あなた/月", f"{avg:,.0f} 円")
             with c3:
