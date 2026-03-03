@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "thumbnail-generator",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "8899", "."],
+      "port": 8899
+    }
+  ]
+}
