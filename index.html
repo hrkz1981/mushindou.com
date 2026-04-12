@@ -1,294 +1,739 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>夢進堂 | AIで時間をつくり、人生を前に進める</title>
-    <meta name="description" content="夢進堂は、AIを使った時短オンライン講座を入口に、人生や想いを整理し、ストーリーとして形にするサポートを行っています。会社員・個人事業主・小規模企業向け。">
-    <meta property="og:title" content="夢進堂 | AIで時間をつくり、人生を前に進める">
-    <meta property="og:description" content="AIを使った時短オンライン講座を入口に、人生や想いを整理し、ストーリーとして形にするサポートを行っています。">
-    <meta property="og:type" content="website">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-</head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>夢進堂 | AIで時間をつくり、人生を前に進める。</title>
+  <meta name="description" content="夢進堂は、AIを使った時短オンライン講座を入口に、人生や想いを整理し、ストーリーとして形にするサポートを行っています。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --white: #ffffff;
+      --off-white: #f8f8f5;
+      --light: #f0f0eb;
+      --mid: #e2e2dc;
+      --border: #d4d4cc;
+      --text: #1c1c1a;
+      --text-mid: #4a4a44;
+      --text-light: #8a8a82;
+      --accent: #1a1a18;
+      --green: #2d6a4f;
+      --green-light: #52b788;
+      --green-subtle: rgba(45,106,79,0.07);
+      --gold: #b5862a;
+      --gold-light: #d4a853;
+      --font-display: 'Cormorant Garamond', Georgia, serif;
+      --font-body: 'Noto Sans JP', sans-serif;
+      --ease: cubic-bezier(0.25,0.1,0.25,1);
+      --ease-out: cubic-bezier(0,0,0.2,1);
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    body{font-family:var(--font-body);color:var(--text);background:var(--white);line-height:1.9;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+    a{text-decoration:none;color:inherit;}
+    ul{list-style:none;}
 
+    /* CURSOR */
+    .cursor,.cursor-ring{position:fixed;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);border-radius:50%;}
+    .cursor{width:8px;height:8px;background:var(--green);transition:width .3s,height .3s;}
+    .cursor-ring{width:36px;height:36px;border:1px solid var(--green);opacity:.4;transition:width .3s,height .3s;}
+
+    /* HEADER */
+    header{position:fixed;top:0;left:0;right:0;z-index:100;padding:22px 0;transition:background .4s,padding .4s,box-shadow .4s;}
+    header.scrolled{background:rgba(255,255,255,.96);backdrop-filter:blur(16px);padding:14px 0;box-shadow:0 1px 0 var(--border);}
+    .header-inner{max-width:1160px;margin:0 auto;padding:0 40px;display:flex;align-items:center;justify-content:space-between;}
+    .logo{font-family:var(--font-display);font-size:1.7rem;font-weight:600;letter-spacing:.1em;color:var(--white);transition:color .3s;}
+    header.scrolled .logo{color:var(--text);}
+    nav{display:flex;gap:32px;align-items:center;}
+    .nav-link{font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.7);font-weight:500;transition:color .3s;}
+    header.scrolled .nav-link{color:var(--text-mid);}
+    .nav-link:hover{color:var(--green-light)!important;}
+    .nav-cta{background:var(--green);color:var(--white)!important;padding:10px 24px;border-radius:2px;font-size:.74rem!important;letter-spacing:.14em!important;transition:background .3s!important;}
+    .nav-cta:hover{background:var(--gold)!important;}
+    .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:4px;}
+    .hamburger span{display:block;width:26px;height:2px;background:var(--white);transition:all .3s;border-radius:2px;}
+    header.scrolled .hamburger span{background:var(--text);}
+    .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+    .hamburger.open span:nth-child(2){opacity:0;}
+    .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+    /* HERO */
+    .hero{min-height:100vh;display:grid;grid-template-columns:55% 45%;overflow:hidden;position:relative;}
+    .hero-left{background:var(--white);display:flex;flex-direction:column;justify-content:center;padding:140px 72px 80px 80px;position:relative;z-index:2;}
+    .hero-right{background:var(--accent);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+    .hero-grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(7,1fr);gap:1px;opacity:.07;}
+    .hero-grid-cell{background:rgba(255,255,255,.6);animation:gp 5s ease-in-out infinite;}
+    .hero-grid-cell:nth-child(3n){animation-delay:.8s;}
+    .hero-grid-cell:nth-child(5n){animation-delay:1.6s;}
+    @keyframes gp{0%,100%{opacity:.2}50%{opacity:1}}
+    .hero-right-content{position:relative;z-index:2;display:flex;flex-direction:column;gap:20px;padding:40px;width:100%;}
+    .stat-block{border:1px solid rgba(255,255,255,.1);padding:28px 32px;border-radius:2px;background:rgba(255,255,255,.04);animation:slideR .8s var(--ease-out) both;}
+    .stat-block:nth-child(2){animation-delay:.15s;}
+    .stat-block:nth-child(3){animation-delay:.3s;}
+    @keyframes slideR{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+    .stat-num{font-family:var(--font-display);font-size:3.6rem;font-weight:700;color:var(--white);line-height:1;letter-spacing:-.02em;}
+    .stat-num em{color:var(--gold-light);font-style:normal;}
+    .stat-label{font-size:.76rem;color:rgba(255,255,255,.45);letter-spacing:.1em;margin-top:8px;}
+    .hero-eyebrow{font-size:.68rem;letter-spacing:.32em;text-transform:uppercase;color:var(--green);font-weight:500;display:flex;align-items:center;gap:14px;margin-bottom:28px;animation:fu .8s var(--ease-out) .2s both;}
+    .hero-eyebrow::before{content:'';width:36px;height:1px;background:var(--green);flex-shrink:0;}
+    .hero-title{font-family:var(--font-display);font-size:clamp(2.8rem,4vw,4.6rem);font-weight:600;line-height:1.3;letter-spacing:.03em;margin-bottom:28px;animation:fu .8s var(--ease-out) .35s both;}
+    .hero-title em{font-style:italic;color:var(--green);}
+    .hero-sub{font-size:.97rem;color:var(--text-mid);line-height:2.1;font-weight:300;max-width:420px;margin-bottom:48px;animation:fu .8s var(--ease-out) .5s both;}
+    .hero-actions{display:flex;gap:14px;flex-wrap:wrap;animation:fu .8s var(--ease-out) .65s both;}
+    @keyframes fu{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+    .btn-p{display:inline-block;padding:15px 40px;background:var(--text);color:var(--white);font-size:.78rem;letter-spacing:.16em;text-transform:uppercase;font-family:var(--font-body);font-weight:500;border-radius:2px;border:1px solid var(--text);transition:background .3s,transform .3s;}
+    .btn-p:hover{background:var(--green);border-color:var(--green);transform:translateY(-2px);}
+    .btn-s{display:inline-block;padding:15px 40px;color:var(--text);font-size:.78rem;letter-spacing:.16em;text-transform:uppercase;font-family:var(--font-body);font-weight:500;border-radius:2px;border:1px solid var(--border);transition:border-color .3s,transform .3s;}
+    .btn-s:hover{border-color:var(--text);transform:translateY(-2px);}
+    .scroll-hint{position:absolute;bottom:36px;left:80px;display:flex;align-items:center;gap:12px;font-size:.66rem;letter-spacing:.22em;color:var(--text-light);text-transform:uppercase;animation:fu .8s var(--ease-out) 1s both;}
+    .scroll-line{width:1px;height:48px;background:var(--border);animation:sl 2s ease-in-out infinite;transform-origin:top;}
+    @keyframes sl{0%{transform:scaleY(0);opacity:0}50%{transform:scaleY(1);opacity:1}100%{transform:scaleY(1);opacity:0}}
+
+    /* TICKER */
+    .ticker{border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--off-white);padding:18px 0;overflow:hidden;}
+    .ticker-track{display:flex;gap:72px;white-space:nowrap;animation:tick 22s linear infinite;}
+    .ticker-item{font-size:.68rem;letter-spacing:.28em;text-transform:uppercase;color:var(--text-light);flex-shrink:0;display:flex;align-items:center;gap:16px;}
+    .ticker-dot{width:4px;height:4px;background:var(--green);border-radius:50%;flex-shrink:0;}
+    @keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+    /* SECTION COMMON */
+    .section{padding:116px 0;}
+    .section--alt{background:var(--off-white);}
+    .section--dark{background:var(--accent);color:var(--white);}
+    .container{max-width:1160px;margin:0 auto;padding:0 40px;}
+    .sec-label{font-size:.65rem;letter-spacing:.35em;text-transform:uppercase;color:var(--green);font-weight:500;display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+    .sec-label::before{content:'';width:28px;height:1px;background:var(--green);}
+    .sec-label--light{color:rgba(255,255,255,.35);}
+    .sec-label--light::before{background:rgba(255,255,255,.3);}
+    .sec-title{font-family:var(--font-display);font-size:clamp(2rem,3.2vw,3.2rem);font-weight:600;line-height:1.35;letter-spacing:.03em;}
+    .sec-title--light{color:var(--white);}
+    .sec-sub{font-size:.97rem;color:var(--text-mid);margin-top:18px;line-height:2.1;font-weight:300;max-width:560px;}
+    .sec-sub--light{color:rgba(255,255,255,.5);}
+
+    /* REVEAL */
+    .rv{opacity:0;transform:translateY(28px);transition:opacity .8s var(--ease-out),transform .8s var(--ease-out);}
+    .rv.on{opacity:1;transform:translateY(0);}
+    .d1{transition-delay:.1s;}.d2{transition-delay:.2s;}.d3{transition-delay:.3s;}
+
+    /* SERVICE */
+    .service-wrap{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start;margin-top:72px;}
+    .service-lead{font-size:1.1rem;font-weight:500;line-height:1.9;margin-bottom:24px;}
+    .service-body{font-size:.97rem;color:var(--text-mid);line-height:2.1;}
+    .service-body p+p{margin-top:18px;}
+    .service-highlight{margin-top:28px;padding:18px 24px;background:var(--green-subtle);border-left:3px solid var(--green);font-weight:500;color:var(--green);font-size:.95rem;border-radius:0 2px 2px 0;}
+    .service-card{background:var(--white);border:1px solid var(--border);border-radius:4px;padding:40px;box-shadow:0 4px 24px rgba(0,0,0,.05);}
+    .service-card-title{font-size:1.05rem;font-weight:700;margin-bottom:28px;padding-bottom:18px;border-bottom:1px solid var(--light);}
+    .service-list{display:flex;flex-direction:column;gap:16px;}
+    .service-list li{display:flex;align-items:center;gap:14px;font-size:.92rem;}
+    .svc-icon{font-size:1.3rem;flex-shrink:0;}
+
+    /* FOR WHO */
+    .who-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--mid);margin-top:72px;}
+    .who-card{background:var(--white);padding:40px 28px;text-align:center;transition:background .3s;}
+    .who-card:hover{background:var(--off-white);}
+    .who-emoji{font-size:2.4rem;margin-bottom:18px;}
+    .who-title{font-size:.95rem;font-weight:700;margin-bottom:10px;line-height:1.6;}
+    .who-desc{font-size:.82rem;color:var(--text-mid);line-height:1.9;}
+
+    /* ABOUT */
+    .about-inner{display:grid;grid-template-columns:1fr 1fr;gap:100px;align-items:center;}
+    .about-visual-box{background:var(--light);border-radius:4px;padding:64px 48px;text-align:center;position:relative;overflow:hidden;}
+    .about-kanji{font-family:var(--font-display);font-size:7rem;font-weight:700;color:rgba(45,106,79,.12);line-height:1.1;letter-spacing:.1em;}
+    .about-tagline{font-family:var(--font-display);font-size:1.3rem;font-style:italic;color:var(--green);margin-top:20px;}
+    .about-deco1{position:absolute;top:-20px;right:-20px;width:90px;height:90px;background:var(--green);border-radius:2px;opacity:.1;}
+    .about-deco2{position:absolute;bottom:-16px;left:-16px;width:64px;height:64px;border:2px solid var(--gold);border-radius:50%;opacity:.25;}
+    .about-text .sec-label{margin-bottom:16px;}
+    .about-text .sec-title{margin-bottom:28px;}
+    .about-lead-quote{font-family:var(--font-display);font-size:1.45rem;font-weight:600;font-style:italic;color:var(--green);margin-bottom:28px;line-height:1.7;padding-bottom:24px;border-bottom:1px solid var(--light);}
+    .about-body{font-size:.97rem;color:var(--text-mid);line-height:2.2;}
+    .about-body p+p{margin-top:18px;}
+
+    /* PLANS */
+    .plans-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--mid);max-width:820px;margin:72px auto 0;}
+    .plan-card{background:var(--white);padding:48px 40px;position:relative;transition:box-shadow .3s;}
+    .plan-card:hover{box-shadow:0 20px 48px rgba(0,0,0,.07);}
+    .plan-card--main{border-top:3px solid var(--green);}
+    .plan-badge{display:inline-block;background:var(--green);color:var(--white);font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;padding:4px 16px;border-radius:2px;margin-bottom:20px;}
+    .plan-badge--sub{background:var(--text-light);}
+    .plan-title{font-size:1.1rem;font-weight:700;margin-bottom:16px;}
+    .plan-price{display:flex;align-items:baseline;gap:4px;margin-bottom:28px;}
+    .plan-yen{font-size:1rem;font-weight:700;color:var(--green);}
+    .plan-num{font-family:var(--font-display);font-size:3.2rem;font-weight:700;color:var(--green);line-height:1;letter-spacing:-.02em;}
+    .plan-unit{font-size:.78rem;color:var(--text-light);margin-left:4px;}
+    .plan-duration{font-size:.8rem;color:var(--text-light);background:var(--light);padding:2px 10px;border-radius:2px;margin-right:6px;}
+    .plan-list{margin-bottom:32px;display:flex;flex-direction:column;gap:12px;}
+    .plan-list li{font-size:.875rem;color:var(--text-mid);padding-left:20px;position:relative;line-height:1.7;}
+    .plan-list li::before{content:'✓';position:absolute;left:0;color:var(--green);font-weight:700;}
+    .btn-plan{display:block;text-align:center;padding:14px;font-size:.78rem;letter-spacing:.15em;text-transform:uppercase;font-family:var(--font-body);font-weight:500;border-radius:2px;transition:all .3s;}
+    .btn-plan--primary{background:var(--green);color:var(--white);border:1px solid var(--green);}
+    .btn-plan--primary:hover{background:var(--gold);border-color:var(--gold);}
+    .btn-plan--outline{color:var(--text);border:1px solid var(--border);}
+    .btn-plan--outline:hover{background:var(--text);color:var(--white);border-color:var(--text);}
+
+    /* VISION */
+    .vision-lead-quote{font-family:var(--font-display);font-size:clamp(1.3rem,2.2vw,1.9rem);font-weight:500;font-style:italic;color:rgba(255,255,255,.85);text-align:center;line-height:1.9;margin-bottom:72px;max-width:720px;margin-left:auto;margin-right:auto;}
+    .vision-cards{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:rgba(255,255,255,.06);}
+    .vision-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);padding:48px 40px;transition:background .3s,transform .3s;}
+    .vision-card:hover{background:rgba(255,255,255,.08);transform:translateY(-4px);}
+    .vision-icon{font-size:2.4rem;margin-bottom:24px;}
+    .vision-title{font-size:1.15rem;font-weight:700;color:var(--white);margin-bottom:16px;line-height:1.5;}
+    .vision-text{font-size:.92rem;color:rgba(255,255,255,.6);line-height:2.1;margin-bottom:24px;}
+    .vision-list{display:flex;flex-direction:column;gap:10px;}
+    .vision-list li{font-size:.82rem;color:rgba(255,255,255,.45);padding-left:18px;position:relative;}
+    .vision-list li::before{content:'○';position:absolute;left:0;color:var(--gold-light);font-size:.7rem;}
+    .vision-close{text-align:center;margin-top:64px;font-family:var(--font-display);font-size:1.3rem;font-style:italic;color:rgba(255,255,255,.5);line-height:2;}
+
+    /* CONTACT */
+    .contact-wrap{max-width:620px;margin:60px auto 0;}
+    .contact-form{background:var(--white);padding:48px;border-radius:4px;box-shadow:0 8px 40px rgba(0,0,0,.06);border:1px solid var(--border);display:flex;flex-direction:column;gap:20px;}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .f-group{display:flex;flex-direction:column;gap:7px;}
+    .f-label{font-size:.82rem;font-weight:700;color:var(--text);}
+    .f-req{font-size:.7rem;color:#ef4444;background:#fef2f2;padding:2px 8px;border-radius:2px;margin-left:6px;}
+    .f-input,.f-textarea{width:100%;padding:13px 16px;border:1px solid var(--border);border-radius:2px;font-family:var(--font-body);font-size:.95rem;color:var(--text);background:var(--off-white);transition:border-color .3s,box-shadow .3s;outline:none;}
+    .f-input:focus,.f-textarea:focus{border-color:var(--green);background:var(--white);box-shadow:0 0 0 3px rgba(45,106,79,.1);}
+    .f-input::placeholder,.f-textarea::placeholder{color:var(--text-light);}
+    .f-textarea{resize:vertical;min-height:120px;}
+    .btn-submit{background:var(--green);color:var(--white);border:none;padding:16px;border-radius:2px;font-size:.8rem;letter-spacing:.18em;text-transform:uppercase;font-family:var(--font-body);font-weight:500;cursor:pointer;transition:background .3s,transform .3s;}
+    .btn-submit:hover{background:var(--gold);transform:translateY(-2px);}
+    .btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+    .f-status{font-size:.88rem;text-align:center;display:none;padding:14px;border-radius:2px;}
+    .f-status.ok{display:block;background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;}
+    .f-status.ng{display:block;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;}
+
+    /* RADIO */
+    .f-radio-group{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+    .f-radio{display:flex;align-items:center;gap:12px;padding:13px 16px;border:1px solid var(--border);border-radius:2px;cursor:pointer;transition:border-color .2s,background .2s;background:var(--off-white);}
+    .f-radio:hover{border-color:var(--green);background:var(--green-subtle);}
+    .f-radio input[type="radio"]{width:16px;height:16px;accent-color:var(--green);flex-shrink:0;cursor:pointer;}
+    .f-radio input[type="radio"]:checked + span{color:var(--green);font-weight:500;}
+    .f-radio:has(input:checked){border-color:var(--green);background:var(--green-subtle);}
+    .f-radio span{font-size:.92rem;color:var(--text-mid);}
+
+    /* FOOTER */
+    footer{background:var(--accent);border-top:1px solid rgba(255,255,255,.06);padding:44px 0 32px;color:rgba(255,255,255,.3);}
+    .footer-inner{display:flex;align-items:center;justify-content:space-between;}
+    .footer-logo{font-family:var(--font-display);font-size:1.4rem;color:rgba(255,255,255,.5);letter-spacing:.1em;}
+    .footer-tagline{font-size:.78rem;color:rgba(255,255,255,.25);margin-top:4px;}
+    .footer-copy{font-size:.73rem;}
+
+    /* BACK TO TOP */
+    .btt{position:fixed;bottom:28px;right:28px;width:48px;height:48px;background:var(--green);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:1.1rem;border-radius:2px;z-index:99;opacity:0;visibility:hidden;transform:translateY(12px);transition:all .3s;}
+    .btt.on{opacity:1;visibility:visible;transform:translateY(0);}
+    .btt:hover{background:var(--gold);transform:translateY(-3px);}
+
+    /* MOBILE NAV */
+    .nav-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:199;opacity:0;pointer-events:none;transition:opacity .3s;}
+    .nav-overlay.on{opacity:1;pointer-events:auto;}
+    .mobile-nav{position:fixed;top:0;right:0;bottom:0;width:80%;max-width:300px;background:var(--white);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;box-shadow:-8px 0 32px rgba(0,0,0,.12);transform:translateX(100%);transition:transform .4s var(--ease);}
+    .mobile-nav.open{transform:translateX(0);}
+    .mobile-nav a{font-size:.95rem;letter-spacing:.12em;color:var(--text-mid);text-transform:uppercase;font-weight:500;}
+    .mobile-nav .nav-cta{background:var(--green);color:var(--white)!important;padding:12px 28px;border-radius:2px;}
+
+    /* RESPONSIVE */
+    @media(max-width:1024px){
+      .hero{grid-template-columns:1fr;}
+      .hero-right{display:none;}
+      .hero-left{padding:140px 40px 80px;}
+      .scroll-hint{left:40px;}
+      .service-wrap{grid-template-columns:1fr;gap:40px;}
+      .about-inner{grid-template-columns:1fr;gap:48px;}
+      .about-visual-box{display:none;}
+      .vision-cards{grid-template-columns:1fr;}
+      .who-grid{grid-template-columns:1fr 1fr;}
+      nav{display:none;}
+      .hamburger{display:flex;}
+    }
+    @media(max-width:640px){
+      .section{padding:80px 0;}
+      .container{padding:0 24px;}
+      .header-inner{padding:0 24px;}
+      .hero-left{padding:120px 24px 60px;}
+      .scroll-hint{left:24px;}
+      .who-grid{grid-template-columns:1fr;background:none;gap:2px;}
+      .plans-grid{grid-template-columns:1fr;}
+      .form-row{grid-template-columns:1fr;}
+      .contact-form{padding:28px 20px;}
+    }
+  </style>
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-03ZD0GZK4T"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-03ZD0GZK4T');
+</script>
+</head>
 <body>
 
-    <!-- ========== ヘッダー ========== -->
-    <header class="header" id="header">
-        <div class="container header-inner">
-            <a href="#" class="logo">夢進堂</a>
-            <nav class="nav" id="nav">
-                <ul class="nav-list">
-                    <li><a href="#service" class="nav-link">AI時短講座</a></li>
-                    <li><a href="#about" class="nav-link">夢進堂について</a></li>
-                    <li><a href="#vision" class="nav-link">これからの夢進堂</a></li>
-                    <li><a href="#contact" class="nav-link nav-cta">お問い合わせ</a></li>
-                </ul>
-            </nav>
-            <button class="hamburger" id="hamburger" aria-label="メニューを開く">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-        </div>
-    </header>
+<div class="cursor" id="cur"></div>
+<div class="cursor-ring" id="curR"></div>
+<div class="nav-overlay" id="overlay"></div>
 
-    <!-- ========== ヒーロー ========== -->
-    <section class="hero" id="hero">
-        <div class="hero-orb hero-orb--1"></div>
-        <div class="hero-orb hero-orb--2"></div>
-        <div class="hero-orb hero-orb--3"></div>
-        <div class="container hero-content">
-            <p class="hero-label">AI × 時短 × 人生</p>
-            <h1 class="hero-title">AIで時間をつくり、<br>人生を前に進める。</h1>
-            <p class="hero-subtitle">夢進堂は、AIを使った時短オンライン講座を入口に、<br class="sp-hide">人生や想いを整理し、ストーリーとして形にするサポートを行っています。</p>
-            <div class="hero-buttons">
-                <a href="#service" class="btn btn--primary">AI時短講座を見る</a>
-                <a href="#contact" class="btn btn--outline">まずは問い合わせる</a>
-            </div>
-        </div>
-        <div class="scroll-indicator">
-            <span></span>
-        </div>
-    </section>
+<!-- HEADER -->
+<header id="hdr">
+  <div class="header-inner">
+    <a href="#" class="logo">夢進堂</a>
+    <nav>
+      <a href="#service" class="nav-link">AI時短講座</a>
+      <a href="#about" class="nav-link">夢進堂について</a>
+      <a href="#vision" class="nav-link">ビジョン</a>
+      <a href="#plans" class="nav-link">料金</a>
+      <a href="#contact" class="nav-link nav-cta">お問い合わせ</a>
+    </nav>
+    <button class="hamburger" id="hbg" aria-label="メニュー">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
 
-    <!-- ========== サービス紹介 ========== -->
-    <section class="section section--light" id="service">
-        <div class="container">
-            <div class="section-header fade-in">
-                <span class="section-label">MAIN SERVICE</span>
-                <h2 class="section-title">AI時短オンライン講座</h2>
-                <p class="section-sub">60分・募集制</p>
-            </div>
-            <div class="service-grid fade-in">
-                <div class="service-text">
-                    <p class="service-lead">忙しい毎日の中で、<br>「考える」「調べる」「まとめる」時間を<br>AIで短縮しませんか？</p>
-                    <p>この講座では、ChatGPTなどのAIを使い、<br>仕事や日常を効率化する方法を<br>やさしく・実践的にお伝えします。</p>
-                    <p class="service-highlight">AIが初めての方も安心して参加できます。</p>
-                </div>
-                <div class="service-card">
-                    <h3 class="service-card-title">講座概要</h3>
-                    <ul class="service-list">
-                        <li>
-                            <span class="service-icon">📅</span>
-                            <span>開催：不定期（募集制）</span>
-                        </li>
-                        <li>
-                            <span class="service-icon">⏱️</span>
-                            <span>時間：60分（オンライン）</span>
-                        </li>
-                        <li>
-                            <span class="service-icon">👥</span>
-                            <span>対象：会社員／個人事業主／小規模企業</span>
-                        </li>
-                        <li>
-                            <span class="service-icon">✨</span>
-                            <span>少人数制</span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
+<!-- MOBILE NAV -->
+<div class="mobile-nav" id="mobileNav">
+  <a href="#service">AI時短講座</a>
+  <a href="#about">夢進堂について</a>
+  <a href="#vision">ビジョン</a>
+  <a href="#plans">料金</a>
+  <a href="#contact" class="nav-cta">お問い合わせ</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <p class="hero-eyebrow">AI × 時短 × 人生</p>
+    <h1 class="hero-title">AIで時間をつくり、<br><em>人生を前に進める。</em></h1>
+    <p class="hero-sub">夢進堂は、AIを使った時短オンライン講座を入口に、人生や想いを整理し、ストーリーとして形にするサポートを行っています。</p>
+    <div class="hero-actions">
+      <a href="#service" class="btn-p">AI時短講座を見る</a>
+      <a href="#contact" class="btn-s">まずは相談する</a>
+    </div>
+    <div class="scroll-hint">
+      <div class="scroll-line"></div>
+      Scroll
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-grid" id="heroGrid"></div>
+    <div class="hero-right-content">
+      <div class="stat-block">
+        <div class="stat-num"><em>60</em>分</div>
+        <div class="stat-label">オンライン完結・少人数制</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-num">¥<em>98,000</em></div>
+        <div class="stat-label">AI時短オンライン講座（税込）</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-num"><em>0</em>知識</div>
+        <div class="stat-label">AIが初めての方も安心して参加できます</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-track">
+    <span class="ticker-item"><span class="ticker-dot"></span>ChatGPT活用</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>業務時短</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>AI講座</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>プロンプト設計</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>人生整理</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>ストーリー作成</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>オリジナル楽曲</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>1on1サポート</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>ChatGPT活用</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>業務時短</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>AI講座</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>プロンプト設計</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>人生整理</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>ストーリー作成</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>オリジナル楽曲</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>1on1サポート</span>
+  </div>
+</div>
+
+<!-- SERVICE -->
+<section class="section section--alt" id="service">
+  <div class="container">
+    <div class="rv">
+      <div class="sec-label">Main Service</div>
+      <h2 class="sec-title">AI時短オンライン講座</h2>
+      <p class="sec-sub">60分・募集制</p>
+    </div>
+    <div class="service-wrap">
+      <div class="rv d1">
+        <p class="service-lead">忙しい毎日の中で、<br>「考える」「調べる」「まとめる」時間を<br>AIで短縮しませんか？</p>
+        <div class="service-body">
+          <p>この講座では、ChatGPTなどのAIを使い、仕事や日常を効率化する方法をやさしく・実践的にお伝えします。</p>
+          <p>専門的な知識は一切不要。実際に手を動かしながら、すぐに使えるスキルを身につけます。</p>
         </div>
-    </section>
-
-    <!-- ========== こんな方におすすめ ========== -->
-    <section class="section" id="features">
-        <div class="container">
-            <div class="section-header fade-in">
-                <span class="section-label">FOR YOU</span>
-                <h2 class="section-title">こんな方におすすめ</h2>
-            </div>
-            <div class="features-grid fade-in">
-                <div class="feature-card">
-                    <div class="feature-emoji">🤔</div>
-                    <h3 class="feature-title">AIが気になるけど<br>何から始めたらいいかわからない</h3>
-                    <p class="feature-desc">初心者の方でも安心。基礎からやさしくお伝えします。</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-emoji">⏰</div>
-                    <h3 class="feature-title">毎日忙しくて<br>時間が足りない</h3>
-                    <p class="feature-desc">AIを活用して、日々の業務時間を大幅に短縮できます。</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-emoji">🎯</div>
-                    <h3 class="feature-title">仕事や家事を<br>もっと効率よくしたい</h3>
-                    <p class="feature-desc">実践ベースで「使える」スキルを身につけます。</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-emoji">📱</div>
-                    <h3 class="feature-title">難しい説明は苦手</h3>
-                    <p class="feature-desc">専門用語を使わず、わかりやすくお伝えします。初心者歓迎です。</p>
-                </div>
-            </div>
+        <div class="service-highlight">AIが初めての方も安心して参加できます。</div>
+      </div>
+      <div class="rv d2">
+        <div class="service-card">
+          <h3 class="service-card-title">講座概要</h3>
+          <ul class="service-list">
+            <li><span class="svc-icon">📅</span><span>開催：不定期（募集制）</span></li>
+            <li><span class="svc-icon">⏱️</span><span>時間：60分（オンライン）</span></li>
+            <li><span class="svc-icon">👥</span><span>対象：会社員／個人事業主／小規模企業</span></li>
+            <li><span class="svc-icon">✨</span><span>少人数制・実践形式</span></li>
+            <li><span class="svc-icon">💻</span><span>PC・スマホどちらでも参加OK</span></li>
+          </ul>
         </div>
-    </section>
+      </div>
+    </div>
+  </div>
+</section>
 
-    <!-- ========== サービス内容 ========== -->
-    <section class="section section--light" id="plans">
-        <div class="container">
-            <div class="section-header fade-in">
-                <span class="section-label">PLANS</span>
-                <h2 class="section-title">サービス内容</h2>
-            </div>
-            <div class="plans-grid fade-in">
-                <div class="plan-card plan-card--main">
-                    <div class="plan-badge">メイン</div>
-                    <h3 class="plan-title">AI時短オンライン講座</h3>
-                    <div class="plan-price">
-                        <span class="plan-duration">60分</span>
-                        <span class="plan-price-yen">¥</span>
-                        <span class="plan-price-num">9,800</span>
-                        <span class="plan-price-unit">（税込）</span>
-                    </div>
-                    <ul class="plan-list">
-                        <li>少人数制オンライン</li>
-                        <li>実際の業務を想定した内容</li>
-                        <li>初心者歓迎</li>
-                    </ul>
-                    <a href="#contact" class="btn btn--primary btn--full">講座について問い合わせる</a>
-                </div>
-                <div class="plan-card plan-card--option">
-                    <div class="plan-badge plan-badge--option">オプション</div>
-                    <h3 class="plan-title">個別AI活用サポート</h3>
-                    <div class="plan-price">
-                        <span class="plan-duration">60分</span>
-                        <span class="plan-price-yen">¥</span>
-                        <span class="plan-price-num">10,000</span>
-                        <span class="plan-price-unit">（税込）</span>
-                    </div>
-                    <ul class="plan-list">
-                        <li>自分の業務に合わせて相談</li>
-                        <li>講座後のフォローに最適</li>
-                        <li>1on1対応</li>
-                    </ul>
-                    <a href="#contact" class="btn btn--outline-dark btn--full">詳細を問い合わせる</a>
-                </div>
-            </div>
+<!-- FOR WHO -->
+<section class="section">
+  <div class="container">
+    <div class="rv">
+      <div class="sec-label">For You</div>
+      <h2 class="sec-title">こんな方におすすめ</h2>
+    </div>
+    <div class="who-grid rv d1">
+      <div class="who-card">
+        <div class="who-emoji">🤔</div>
+        <h4 class="who-title">AIが気になるけど<br>何から始めたらいいかわからない</h4>
+        <p class="who-desc">初心者の方でも安心。基礎からやさしくお伝えします。</p>
+      </div>
+      <div class="who-card">
+        <div class="who-emoji">⏰</div>
+        <h4 class="who-title">毎日忙しくて<br>時間が足りない</h4>
+        <p class="who-desc">AIを活用して、日々の業務時間を大幅に短縮できます。</p>
+      </div>
+      <div class="who-card">
+        <div class="who-emoji">🎯</div>
+        <h4 class="who-title">仕事や家事を<br>もっと効率よくしたい</h4>
+        <p class="who-desc">実践ベースで「使える」スキルを身につけます。</p>
+      </div>
+      <div class="who-card">
+        <div class="who-emoji">📱</div>
+        <h4 class="who-title">難しい説明は苦手<br>初心者歓迎</h4>
+        <p class="who-desc">専門用語を使わず、わかりやすくお伝えします。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="section section--alt" id="about">
+  <div class="container">
+    <div class="about-inner">
+      <div class="rv">
+        <div class="about-visual-box">
+          <div class="about-kanji">夢<br>進<br>堂</div>
+          <div class="about-tagline">一歩ずつ、夢へ。</div>
+          <div class="about-deco1"></div>
+          <div class="about-deco2"></div>
         </div>
-    </section>
-
-    <!-- ========== 夢進堂について ========== -->
-    <section class="section" id="about">
-        <div class="container">
-            <div class="section-header fade-in">
-                <span class="section-label">ABOUT</span>
-                <h2 class="section-title">夢進堂について</h2>
-            </div>
-            <div class="about-content fade-in">
-                <p class="about-lead">AIを使って、時間に余裕のある働き方をつくる。</p>
-                <div class="about-body">
-                    <p>日々の業務に追われ、「本当にやりたい仕事」に時間を使えていますか？</p>
-                    <p>夢進堂では、ChatGPTなどのAIツールを活用し、日常業務の時間を短縮する方法を実践ベースでお伝えします。</p>
-                    <p>難しい専門知識は不要。「使える人」になることをゴールにしています。</p>
-                </div>
-            </div>
+      </div>
+      <div class="rv d1">
+        <div class="sec-label">About</div>
+        <h2 class="sec-title">夢進堂について</h2>
+        <p class="about-lead-quote">AIを使って、<br>時間に余裕のある働き方をつくる。</p>
+        <div class="about-body">
+          <p>日々の業務に追われ、「本当にやりたい仕事」に時間を使えていますか？</p>
+          <p>夢進堂では、ChatGPTなどのAIツールを活用し、日常業務の時間を短縮する方法を実践ベースでお伝えします。難しい専門知識は不要。「使える人」になることをゴールにしています。</p>
+          <p>AIで時間に余裕が生まれると、人は自分の人生と向き合えるようになります。夢進堂は、AI時短講座を入口に、人生や想いを整理しストーリーとして形にするサポートも行っています。</p>
+          <p>「自分の人生を大切にしたい」そんな方の伴走者でありたいと考えています。</p>
         </div>
-    </section>
+      </div>
+    </div>
+  </div>
+</section>
 
-    <!-- ========== これからの夢進堂 ========== -->
-    <section class="section section--dark" id="vision">
-        <div class="container">
-            <div class="section-header fade-in">
-                <span class="section-label section-label--light">VISION</span>
-                <h2 class="section-title section-title--light">夢進堂が大切にしていること</h2>
-            </div>
-            <div class="vision-content fade-in">
-                <p class="vision-lead">AIで時間に余裕が生まれると、<br>人は自分の人生と向き合えるようになります。</p>
-            </div>
-            <div class="expanded-services fade-in">
-                <!-- 人生ストーリーサービス -->
-                <div class="service-detail-card">
-                    <div class="service-detail-icon">📖</div>
-                    <h3 class="service-detail-title">人生をストーリーにして整理する</h3>
-                    <p class="service-detail-text">
-                        これまでの歩みや大切にしている価値観を丁寧にヒアリングし、AIの力を借りて一つの「ストーリー」として編み上げます。自分自身の輪郭がはっきりすることで、次の一歩がより力強いものになります。
-                    </p>
-                    <ul class="service-detail-list">
-                        <li>価値観の言語化サポート</li>
-                        <li>自分史・プロフィールの作成</li>
-                        <li>未来のビジョンの整理</li>
-                    </ul>
-                </div>
-                <!-- 音楽制作サービス -->
-                <div class="service-detail-card">
-                    <div class="service-detail-icon">🎵</div>
-                    <h3 class="service-detail-title">想いを音楽という形にする</h3>
-                    <p class="service-detail-text">
-                        言葉にできない感情や、大切な人への想いを音楽にして残しませんか？AIを活用することで、専門的な知識がなくても、あなたのストーリーに基づいた世界に一つだけの楽曲を制作します。
-                    </p>
-                    <ul class="service-detail-list">
-                        <li>オリジナル楽曲の制作</li>
-                        <li>想いを乗せた歌詞作成</li>
-                        <li>記念日やギフトにも最適</li>
-                    </ul>
-                </div>
-            </div>
-            <p class="vision-closing fade-in">「自分の人生を大切にしたい」<br>そんな方の伴走者でありたいと考えています。</p>
+<!-- PLANS -->
+<section class="section" id="plans">
+  <div class="container">
+    <div class="rv">
+      <div class="sec-label">Plans</div>
+      <h2 class="sec-title">サービス内容・料金</h2>
+      <p class="sec-sub">まずは相談だけでもOKです。お気軽にお問い合わせください。</p>
+    </div>
+    <div class="plans-grid rv d1">
+      <div class="plan-card plan-card--main">
+        <div class="plan-badge">メイン</div>
+        <h3 class="plan-title">AI時短オンライン講座</h3>
+        <div class="plan-price">
+          <span class="plan-duration">60分</span>
+          <span class="plan-yen">¥</span>
+          <span class="plan-num">98,000</span>
+          <span class="plan-unit">（税込）</span>
         </div>
-    </section>
-
-    <!-- ========== お問い合わせ ========== -->
-    <section class="section" id="contact">
-        <div class="container">
-            <div class="section-header fade-in">
-                <span class="section-label">CONTACT</span>
-                <h2 class="section-title">お問い合わせ</h2>
-                <p class="section-desc">まずは相談だけでもOKです。<br>お気軽にお問い合わせください。</p>
-            </div>
-            <div class="contact-wrap fade-in">
-                <form id="contactForm" class="contact-form" action="contact.php" method="POST">
-                    <div class="form-group">
-                        <label for="name">お名前 <span class="required">必須</span></label>
-                        <input type="text" id="name" name="name" placeholder="山田 太郎" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="email">メールアドレス <span class="required">必須</span></label>
-                        <input type="email" id="email" name="email" placeholder="example@gmail.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="subject">件名</label>
-                        <input type="text" id="subject" name="subject" placeholder="講座について、など">
-                    </div>
-                    <div class="form-group">
-                        <label for="message">メッセージ内容 <span class="required">必須</span></label>
-                        <textarea id="message" name="message" rows="5" placeholder="ご相談内容をご記入ください" required></textarea>
-                    </div>
-                    <div id="formStatus" class="form-status"></div>
-                    <div class="form-submit">
-                        <button type="submit" class="btn btn--primary btn--full" id="submitBtn">
-                            <span class="btn-text">この内容で送信する</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
+        <ul class="plan-list">
+          <li>少人数制オンライン</li>
+          <li>実際の業務を想定した内容</li>
+          <li>初心者歓迎</li>
+          <li>録画アーカイブ付き</li>
+        </ul>
+        <a href="#contact" class="btn-plan btn-plan--primary">講座について問い合わせる</a>
+      </div>
+      <div class="plan-card">
+        <div class="plan-badge plan-badge--sub">オプション</div>
+        <h3 class="plan-title">個別AI活用サポート</h3>
+        <div class="plan-price">
+          <span class="plan-duration">60分</span>
+          <span class="plan-yen">¥</span>
+          <span class="plan-num">158,000</span>
+          <span class="plan-unit">（税込）</span>
         </div>
-    </section>
+        <ul class="plan-list">
+          <li>自分の業務に合わせて相談</li>
+          <li>講座後のフォローに最適</li>
+          <li>1on1対応</li>
+          <li>チャットサポート付き</li>
+        </ul>
+        <a href="#contact" class="btn-plan btn-plan--outline">詳細を問い合わせる</a>
+      </div>
+    </div>
+  </div>
+</section>
 
-    <!-- ========== トップへ戻るボタン ========== -->
-    <a href="#" class="back-to-top" id="backToTop" aria-label="トップへ戻る">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="18 15 12 9 6 15"></polyline>
-        </svg>
-    </a>
+<!-- VISION -->
+<section class="section section--dark" id="vision">
+  <div class="container">
+    <div class="rv">
+      <div class="sec-label sec-label--light">Vision</div>
+      <h2 class="sec-title sec-title--light">夢進堂が大切にしていること</h2>
+    </div>
+    <p class="vision-lead-quote rv d1">「AIで時間に余裕が生まれると、<br>人は自分の人生と向き合えるようになります。」</p>
+    <div class="vision-cards rv d2">
+      <div class="vision-card">
+        <div class="vision-icon">📖</div>
+        <h3 class="vision-title">人生をストーリーにして整理する</h3>
+        <p class="vision-text">これまでの歩みや大切にしている価値観を丁寧にヒアリングし、AIの力を借りて一つの「ストーリー」として編み上げます。自分自身の輪郭がはっきりすることで、次の一歩がより力強いものになります。</p>
+        <ul class="vision-list">
+          <li>価値観の言語化サポート</li>
+          <li>自分史・プロフィールの作成</li>
+          <li>未来のビジョンの整理</li>
+        </ul>
+      </div>
+      <div class="vision-card">
+        <div class="vision-icon">🎵</div>
+        <h3 class="vision-title">想いを音楽という形にする</h3>
+        <p class="vision-text">言葉にできない感情や、大切な人への想いを音楽にして残しませんか？AIを活用することで、専門的な知識がなくても、あなたのストーリーに基づいた世界に一つだけの楽曲を制作します。</p>
+        <ul class="vision-list">
+          <li>オリジナル楽曲の制作</li>
+          <li>想いを乗せた歌詞作成</li>
+          <li>記念日やギフトにも最適</li>
+        </ul>
+      </div>
+    </div>
+    <p class="vision-close rv d3">「自分の人生を大切にしたい」<br>そんな方の伴走者でありたいと考えています。</p>
+  </div>
+</section>
 
-    <!-- ========== フッター ========== -->
-    <footer class="footer">
-        <div class="container footer-inner">
-            <div class="footer-main">
-                <p class="footer-logo">夢進堂</p>
-                <p class="footer-tagline">一歩ずつ、夢へ。</p>
+<!-- MOVIE -->
+<section class="section" id="movie" style="background:var(--off-white);">
+  <div class="container">
+    <div class="sec-head rv">
+      <span class="sec-label">MOVIE</span>
+      <h2 class="sec-title">動画で学ぶ</h2>
+      <p class="sec-sub" style="margin:18px auto 0;text-align:center;">AI初心者の方へ伝えたいことをまとめました。<br>動画を見てからお気軽にご相談ください。</p>
+    </div>
+
+    <!-- メイン動画 -->
+    <div class="rv d1" style="max-width:760px;margin:48px auto 0;">
+      <div style="position:relative;padding-bottom:56.25%;height:0;border-radius:4px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.1);">
+        <iframe src="https://www.youtube.com/embed/mpekbRG6odM" title="AI初心者にお伝えしたいこと" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;"></iframe>
+      </div>
+    </div>
+
+    <!-- 新着動画一覧 -->
+    <div class="rv d2" style="margin-top:60px;">
+      <h3 style="text-align:center;font-family:var(--font-display);font-size:1.2rem;color:var(--accent);margin-bottom:32px;letter-spacing:.05em;">新着動画</h3>
+      <div id="yt-feed" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;"></div>
+      <p id="yt-error" style="display:none;text-align:center;color:var(--text-light);font-size:.9rem;"></p>
+    </div>
+
+    <div style="text-align:center;margin-top:40px;display:flex;flex-direction:column;align-items:center;gap:16px;">
+      <a href="https://www.youtube.com/channel/UCB_bfJJPEY4ZOZPCMH0v8Tw" target="_blank" style="display:inline-flex;align-items:center;gap:12px;background:#FF0000;color:#fff;text-decoration:none;padding:14px 32px;border-radius:4px;font-size:.95rem;font-weight:600;box-shadow:0 4px 16px rgba(255,0,0,.3);transition:opacity .2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        チャンネルをもっと見る
+      </a>
+      <p style="font-size:.95rem;color:var(--text-mid);margin-top:8px;">動画を見てご相談したい方はこちら</p>
+      <a href="#contact" class="btn-s" style="display:inline-block;">お問い合わせフォームへ進む →</a>
+    </div>
+  </div>
+</section>
+
+<script>
+/* YouTube RSS feed via public API */
+(function(){
+  const CHANNEL = 'UCB_bfJJPEY4ZOZPCMH0v8Tw';
+  const RSS_URL = 'https://www.youtube.com/feeds/videos.xml?channel_id=' + CHANNEL;
+  const PROXY   = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(RSS_URL) + '&count=6';
+  const grid    = document.getElementById('yt-feed');
+  const errEl   = document.getElementById('yt-error');
+
+  fetch(PROXY)
+    .then(r => r.json())
+    .then(data => {
+      if(!data.items || data.items.length === 0){ throw new Error('no items'); }
+      data.items.forEach(item => {
+        const videoId = item.link.split('v=')[1];
+        const thumb   = 'https://img.youtube.com/vi/' + videoId + '/mqdefault.jpg';
+        const date    = new Date(item.pubDate).toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'});
+        const card    = document.createElement('a');
+        card.href     = item.link;
+        card.target   = '_blank';
+        card.style.cssText = 'text-decoration:none;background:#fff;border-radius:4px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.06);border:1px solid var(--border);transition:transform .2s,box-shadow .2s;display:block;';
+        card.onmouseover = () => { card.style.transform='translateY(-4px)'; card.style.boxShadow='0 8px 32px rgba(0,0,0,.12)'; };
+        card.onmouseout  = () => { card.style.transform=''; card.style.boxShadow='0 4px 20px rgba(0,0,0,.06)'; };
+        card.innerHTML = `
+          <div style="position:relative;padding-bottom:56.25%;background:#000;">
+            <img src="${thumb}" alt="${item.title}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;">
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+              <div style="width:48px;height:48px;background:rgba(255,0,0,.85);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+              </div>
             </div>
-            <p class="footer-copy">&copy; 2026 夢進堂 All Rights Reserved.</p>
-        </div>
-    </footer>
+          </div>
+          <div style="padding:16px;">
+            <p style="font-size:.88rem;color:var(--text-light);margin-bottom:6px;">${date}</p>
+            <p style="font-size:.95rem;color:var(--accent);font-weight:500;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${item.title}</p>
+          </div>`;
+        grid.appendChild(card);
+      });
+    })
+    .catch(() => {
+      errEl.style.display = 'block';
+      errEl.textContent   = '動画の読み込みに失敗しました。チャンネルからご確認ください。';
+    });
+})();
+</script>
 
-    <script src="script.js"></script>
+<!-- CONTACT -->
+<section class="section" id="contact">
+  <div class="container">
+    <div class="rv" style="text-align:center;">
+      <div class="sec-label" style="justify-content:center;">Contact</div>
+      <h2 class="sec-title">お問い合わせ</h2>
+      <p class="sec-sub" style="margin:18px auto 0;text-align:center;">まずは相談だけでもOKです。<br>お気軽にお問い合わせください。</p>
+    </div>
+    <div class="contact-wrap rv d1">
+      <div class="contact-form" style="text-align:center;padding:48px;">
+        <p style="font-size:1rem;color:var(--text-mid);margin-bottom:32px;line-height:1.8;">下のボタンからお問い合わせフォームへお進みください。<br>ご質問・ご相談など、お気軽にどうぞ。</p>
+        <a href="https://forms.gle/3L9j5R2dU5mhFidy8" target="_blank" class="btn-submit" style="display:inline-block;text-decoration:none;padding:16px 48px;font-size:1rem;">お問い合わせフォームへ進む →</a>
+        <p style="font-size:.8rem;color:var(--text-light);margin-top:20px;">※ 新しいタブでGoogleフォームが開きます</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container footer-inner">
+    <div>
+      <div class="footer-logo">夢進堂</div>
+      <div class="footer-tagline">一歩ずつ、夢へ。</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:12px;">
+      <a href="https://www.youtube.com/channel/UCB_bfJJPEY4ZOZPCMH0v8Tw" target="_blank" style="display:inline-flex;align-items:center;gap:8px;color:rgba(255,255,255,.6);text-decoration:none;font-size:.85rem;transition:color .2s;" onmouseover="this.style.color='#FF0000'" onmouseout="this.style.color='rgba(255,255,255,.6)'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        YouTube
+      </a>
+      <a href="https://www.instagram.com/hrkz1981_mushindou/" target="_blank" style="display:inline-flex;align-items:center;gap:8px;color:rgba(255,255,255,.6);text-decoration:none;font-size:.85rem;transition:color .2s;" onmouseover="this.style.color='#E1306C'" onmouseout="this.style.color='rgba(255,255,255,.6)'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+        Instagram
+      </a>
+      <p class="footer-copy">&copy; 2026 夢進堂 All Rights Reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<a href="#" class="btt" id="btt">↑</a>
+
+<script>
+  /* cursor */
+  const cur=document.getElementById('cur'),curR=document.getElementById('curR');
+  let cx=0,cy=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{cx=e.clientX;cy=e.clientY;cur.style.left=cx+'px';cur.style.top=cy+'px';});
+  (function loop(){rx+=(cx-rx)*.12;ry+=(cy-ry)*.12;curR.style.left=rx+'px';curR.style.top=ry+'px';requestAnimationFrame(loop);})();
+  document.querySelectorAll('a,button').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{cur.style.width='16px';cur.style.height='16px';curR.style.width='52px';curR.style.height='52px';});
+    el.addEventListener('mouseleave',()=>{cur.style.width='8px';cur.style.height='8px';curR.style.width='36px';curR.style.height='36px';});
+  });
+
+  /* hero grid */
+  const hg=document.getElementById('heroGrid');
+  if(hg){for(let i=0;i<35;i++){const d=document.createElement('div');d.className='hero-grid-cell';hg.appendChild(d);}}
+
+  /* header & back to top */
+  const hdr=document.getElementById('hdr'),btt=document.getElementById('btt');
+  window.addEventListener('scroll',()=>{
+    hdr.classList.toggle('scrolled',window.scrollY>60);
+    btt.classList.toggle('on',window.scrollY>300);
+  },{passive:true});
+
+  /* hamburger */
+  const hbg=document.getElementById('hbg'),mNav=document.getElementById('mobileNav'),ovl=document.getElementById('overlay');
+  const toggleNav=()=>{
+    hbg.classList.toggle('open');mNav.classList.toggle('open');ovl.classList.toggle('on');
+    document.body.style.overflow=mNav.classList.contains('open')?'hidden':'';
+  };
+  hbg.addEventListener('click',toggleNav);
+  ovl.addEventListener('click',toggleNav);
+  mNav.querySelectorAll('a').forEach(a=>a.addEventListener('click',toggleNav));
+
+  /* smooth scroll */
+  document.querySelectorAll('a[href^="#"]').forEach(a=>{
+    a.addEventListener('click',e=>{
+      e.preventDefault();
+      const t=document.querySelector(a.getAttribute('href'));
+      if(t)window.scrollTo({top:t.getBoundingClientRect().top+window.scrollY-hdr.offsetHeight,behavior:'smooth'});
+    });
+  });
+
+  /* reveal */
+  const obs=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');obs.unobserve(e.target);}});
+  },{threshold:.12,rootMargin:'0px 0px -40px 0px'});
+  document.querySelectorAll('.rv').forEach(el=>obs.observe(el));
+
+  /* contact form */
+  /* Google Form submission */
+  const GFORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSctz8pkvMsUp7CptH18w1lRJmxwh2Aj14AWG3QM2O0tk-mA2g/formResponse';
+  // entry IDs - need to be confirmed from Google Form
+  const ENTRY_NAME    = 'entry.278892963';
+  const ENTRY_EMAIL   = 'entry.283211034';
+  const ENTRY_SERVICE = 'entry.2035937555';
+  const ENTRY_MESSAGE = 'entry.1226479356';
+
+  const form=document.getElementById('cForm'),fStatus=document.getElementById('fStatus'),fBtn=document.getElementById('fBtn');
+  if(form){
+    form.addEventListener('submit', async e=>{
+      e.preventDefault();
+      const name = document.getElementById('f-name').value;
+      const email = document.getElementById('f-email').value;
+      const service = form.querySelector('input[name="service"]:checked');
+      const message = document.getElementById('f-message').value;
+      if(!service){ fStatus.textContent='サービスを選択してください。'; fStatus.className='f-status ng'; return; }
+      fBtn.disabled=true; fBtn.textContent='送信中...';
+      fStatus.className='f-status';
+      const body = new FormData();
+      body.append(ENTRY_NAME, name);
+      body.append(ENTRY_EMAIL, email);
+      body.append(ENTRY_SERVICE, service.value);
+      body.append(ENTRY_MESSAGE, message);
+      try{
+        await fetch(GFORM_URL, {method:'POST', body, mode:'no-cors'});
+        fStatus.textContent='送信が完了しました！ご連絡ありがとうございます。';
+        fStatus.className='f-status ok';
+        form.reset();
+      }catch{
+        fStatus.textContent='送信に失敗しました。時間をおいて再度お試しください。';
+        fStatus.className='f-status ng';
+      }finally{
+        fBtn.disabled=false; fBtn.textContent='この内容で送信する';
+      }
+    });
+  }
+</script>
 </body>
-
 </html>
