@@ -1740,7 +1740,7 @@ body.font-sans h1, body.font-sans h2, body.font-sans h3, body.font-sans h4{font-
       <div>
         <h5>SOCIAL</h5>
         <ul>
-          <li><a href="https://www.youtube.com/channel/UCB_bfJJPEY4ZOZPCMH0v8Tw" target="_blank" rel="noopener">YouTube</a></li>
+          <li><a href="https://www.youtube.com/@mushindou_cats" target="_blank" rel="noopener noreferrer">YouTube</a></li>
           <li><a href="https://www.instagram.com/hrkz1981_mushindou/" target="_blank" rel="noopener">Instagram</a></li>
         </ul>
       </div>
@@ -1803,8 +1803,11 @@ body.font-sans h1, body.font-sans h2, body.font-sans h3, body.font-sans h4{font-
   .sb-btn.ghost{display:none}
   .sb-title{font-size:13px}
 }
-/* push footer so bar doesn't overlap forever */
-body{padding-bottom:80px}
+/* push footer so the fixed sticky CTA bar never overlaps footer links */
+body{padding-bottom:140px}
+@media (max-width:640px){ body{padding-bottom:120px} }
+/* safety: if the bar is dismissed it must not keep capturing clicks */
+.stickybar.hidden{pointer-events:none}
 </style>
 
 <!-- ============= TWEAKS PANEL ============= -->
