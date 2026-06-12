@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>料金・お申し込み | 夢進堂</title>
+<meta name="description" content="夢進堂の料金・お申し込みページ。HP制作、所見メーカーのご案内。お支払いはクレジットカード（Stripe）対応予定。" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Shippori+Mincho:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ===== 夢進堂 共通トークン（index.html と同一） ===== */
+:root{
+  --navy-900:#0B1530;
+  --navy-800:#10204A;
+  --navy-700:#1A2E5C;
+  --navy-50:#F3F1EA;
+  --cream:#F7F4EC;
+  --cream-2:#EEE8D8;
+  --gold:#C9A961;
+  --gold-2:#B8934A;
+  --gold-soft:#E6D3A3;
+  --ink:#0E1424;
+  --muted:#6B6F7A;
+  --line:rgba(14,20,36,.12);
+  --font-serif:"Shippori Mincho","Noto Serif JP",serif;
+  --font-sans:"Noto Sans JP",system-ui,sans-serif;
+  --font-lat-serif:"Cormorant Garamond","Shippori Mincho",serif;
+  --font-mono:"JetBrains Mono",ui-monospace,monospace;
+  --maxw:1100px;
+  --r-lg:18px;
+  --r-md:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--font-sans);color:var(--ink);background:var(--cream);line-height:1.8;font-size:15px;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+h1,h2,h3{font-family:var(--font-serif);font-weight:600;letter-spacing:.02em;line-height:1.4;margin:0}
+p{margin:0}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px}
+.kicker{font-family:var(--font-mono);font-size:11px;letter-spacing:.25em;color:var(--gold-2);text-transform:uppercase}
+.eyebrow{font-family:var(--font-lat-serif);font-style:italic;font-size:15px;color:var(--gold-2);letter-spacing:.08em}
+.gold-rule{width:56px;height:1px;background:var(--gold);border:0;margin:18px 0 0}
+
+/* NAV */
+.nav{position:sticky;top:0;background:color-mix(in oklab,var(--cream) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);z-index:10}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;max-width:var(--maxw);margin:0 auto}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{width:38px;height:38px;border:1px solid var(--gold);color:var(--gold-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-serif);font-size:18px;border-radius:4px}
+.brand-text{font-family:var(--font-serif);font-size:17px;font-weight:600;color:var(--navy-900)}
+.brand-sub{font-family:var(--font-mono);font-size:9px;letter-spacing:.3em;color:var(--muted);text-transform:uppercase}
+.nav-back{font-size:13px;color:var(--muted);transition:.2s}
+.nav-back:hover{color:var(--navy-900)}
+
+/* HERO */
+.page-hero{padding:80px 0 56px;text-align:left}
+.page-hero h1{font-size:clamp(28px,4.5vw,42px);color:var(--navy-900);margin-top:14px}
+.page-hero .lead{margin-top:18px;color:var(--muted);max-width:640px}
+
+/* PLANS */
+.plans{padding:24px 0 80px}
+.plans-label{margin-top:48px}
+.plans-label h2{font-size:20px;color:var(--navy-900)}
+.plan-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px;margin-top:32px}
+.plan-grid-hp{display:grid;grid-template-columns:repeat(2,1fr);gap:28px;margin-top:24px}
+@media (max-width:760px){ .plan-grid-hp{grid-template-columns:1fr} }
+.plan{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:36px 32px;display:flex;flex-direction:column;gap:18px;position:relative}
+.plan-badge{position:absolute;top:-13px;left:28px;background:var(--gold);color:var(--navy-900);font-size:11px;font-weight:700;letter-spacing:.12em;padding:4px 14px;border-radius:99px}
+.plan.featured{background:var(--navy-900);color:var(--cream);border-color:rgba(201,169,97,.3)}
+.plan-tag{font-family:var(--font-mono);font-size:10px;letter-spacing:.25em;color:var(--gold-2)}
+.plan.featured .plan-tag{color:var(--gold)}
+.plan h2{font-size:22px;color:var(--navy-900)}
+.plan.featured h2{color:#fff}
+.plan-desc{font-size:13.5px;color:var(--muted)}
+.plan.featured .plan-desc{color:color-mix(in oklab,var(--cream) 70%,transparent)}
+.price-row{display:flex;flex-wrap:wrap;gap:24px;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.plan.featured .price-row{border-color:rgba(201,169,97,.25)}
+.price .pe{font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;color:var(--muted)}
+.plan.featured .price .pe{color:var(--gold-soft)}
+.price .yen{font-family:var(--font-serif);font-size:16px;color:var(--gold-2)}
+.price .num{font-family:var(--font-serif);font-size:38px;font-weight:600;color:var(--navy-900);letter-spacing:.02em}
+.plan.featured .price .num{color:#fff}
+.plan.featured .price .yen{color:var(--gold)}
+.price .unit{font-size:11px;color:var(--muted);margin-left:5px}
+.plan.featured .price .unit{color:color-mix(in oklab,var(--cream) 55%,transparent)}
+.feats{list-style:none;padding:0;margin:0;display:grid;gap:9px;font-size:13.5px}
+.feats li{padding-left:20px;position:relative}
+.feats li::before{content:"◆";position:absolute;left:0;top:0;font-size:9px;color:var(--gold-2)}
+.beta-note{font-size:12px;background:var(--navy-50);border:1px solid var(--line);border-radius:var(--r-md);padding:10px 14px;color:var(--muted)}
+.plan.featured .beta-note{background:rgba(255,255,255,.06);border-color:rgba(201,169,97,.25);color:color-mix(in oklab,var(--cream) 70%,transparent)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:15px 28px;border-radius:4px;font-size:13.5px;font-weight:500;letter-spacing:.05em;transition:.2s;margin-top:auto}
+.btn-primary{background:var(--navy-900);color:var(--cream);border:1px solid var(--navy-900)}
+.btn-primary:hover{background:var(--navy-700);transform:translateY(-1px)}
+.plan.featured .btn-primary{background:var(--gold);border-color:var(--gold);color:var(--navy-900)}
+.btn-ghost{background:transparent;color:var(--navy-900);border:1px solid var(--line)}
+.btn-ghost:hover{border-color:var(--navy-900)}
+.btn-disabled{background:var(--cream-2);color:var(--muted);border:1px solid var(--line);cursor:default;pointer-events:none}
+.plan.featured .btn-disabled{background:rgba(255,255,255,.08);color:color-mix(in oklab,var(--cream) 55%,transparent);border-color:rgba(201,169,97,.2)}
+
+/* PAYMENT */
+.payment{padding:0 0 72px}
+.payment-card{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:32px;display:grid;gap:12px}
+.payment-card h3{font-size:17px;color:var(--navy-900)}
+.payment-card p{font-size:13.5px;color:var(--muted)}
+
+/* OTHER */
+.others{padding:0 0 88px}
+.others-card{background:var(--navy-50);border:1px solid var(--line);border-radius:var(--r-lg);padding:32px;display:grid;gap:10px}
+.others-card h3{font-size:17px;color:var(--navy-900)}
+.others-card p{font-size:13.5px;color:var(--muted)}
+.ext-links{display:flex;flex-wrap:wrap;gap:14px;margin-top:6px}
+
+/* FOOTER */
+.footer{background:var(--navy-900);color:color-mix(in oklab,var(--cream) 75%,transparent);padding:48px 0 32px;border-top:1px solid rgba(201,169,97,.15)}
+.footer-bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;font-size:11px;letter-spacing:.1em;font-family:var(--font-mono);color:color-mix(in oklab,var(--cream) 50%,transparent)}
+.footer-links{display:flex;gap:20px;font-size:12px;font-family:var(--font-sans);letter-spacing:.05em;margin-bottom:24px}
+.footer-links a:hover{color:var(--gold-soft)}
+</style>
+</head>
+<body>
+
+<!-- ============= NAV ============= -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand">
+      <div class="brand-mark">夢</div>
+      <div>
+        <div class="brand-text">夢進堂</div>
+        <div class="brand-sub">Mushindou</div>
+      </div>
+    </a>
+    <a href="index.html" class="nav-back">← トップへ戻る</a>
+  </div>
+</nav>
+
+<!-- ============= HERO ============= -->
+<header class="page-hero">
+  <div class="wrap">
+    <span class="kicker">— Pricing &amp; Order</span>
+    <h1>料金・お申し込み</h1>
+    <hr class="gold-rule" />
+    <p class="lead">
+      夢進堂のサービス料金のご案内です。<br/>
+      お支払いはクレジットカード（Stripe）に対応予定です。準備が整い次第、このページからお申し込みいただけます。
+    </p>
+  </div>
+</header>
+
+<!-- ============= PLANS ============= -->
+<section class="plans">
+  <div class="wrap">
+    <!-- ===== HP制作 2プラン比較 ===== -->
+    <div class="plans-label">
+      <span class="kicker">— Web Site</span>
+      <h2>HP制作（2つのプラン）</h2>
+    </div>
+    <div class="plan-grid-hp">
+
+      <!-- ① スタート（1ページ） -->
+      <div class="plan featured">
+        <div class="plan-badge">まずはこちら</div>
+        <div class="plan-tag">◆ START</div>
+        <h2>スタート（1ページ）</h2>
+        <p class="plan-desc">1枚完結のホームページ。お店の魅力をぎゅっとまとめて、まず公開したい方に。</p>
+        <div class="price-row">
+          <div class="price">
+            <span class="pe">制作費（一回）</span>
+            <div><span class="yen">¥</span><span class="num">18,000</span><span class="unit">税込</span></div>
+          </div>
+          <div class="price">
+            <span class="pe">月額（毎月）</span>
+            <div><span class="yen">¥</span><span class="num">3,300</span><span class="unit">税込 / 月</span></div>
+          </div>
+        </div>
+        <ul class="feats">
+          <li>1ページ完結のスマホ最適化サイト</li>
+          <li>Googleマップ・営業時間・お問い合わせ導線</li>
+          <li>公開までしっかりサポート</li>
+        </ul>
+        <!-- STRIPE_LINK_HP_START -->
+        <!-- ↑ Stripe Payment Link 発行後、下の a タグの href を差し替え、btn-disabled を btn-primary に変更 -->
+        <a class="btn btn-disabled" href="#">クレジットカード決済（準備中）</a>
+        <a class="btn btn-ghost" href="index.html#contact" style="margin-top:10px">まずは相談する</a>
+      </div>
+
+      <!-- ② しっかり（複数ページ） -->
+      <div class="plan">
+        <div class="plan-tag">◆ SHIKKARI</div>
+        <h2>しっかり（複数ページ）</h2>
+        <p class="plan-desc">メニュー・施工事例・ブログなど、複数ページでお店の世界観をきちんと伝えたい方に。</p>
+        <div class="price-row">
+          <div class="price">
+            <span class="pe">制作費（一回）</span>
+            <div><span class="yen">¥</span><span class="num">49,800</span><span class="unit">〜 税込</span></div>
+          </div>
+          <div class="price">
+            <span class="pe">月額（毎月）</span>
+            <div><span class="yen">¥</span><span class="num">3,300</span><span class="unit">税込 / 月</span></div>
+          </div>
+        </div>
+        <ul class="feats">
+          <li>複数ページ構成（メニュー / 施工事例 / ブログ等）</li>
+          <li>お知らせ・お問い合わせフォーム</li>
+          <li>ページ数・内容に応じてお見積り</li>
+        </ul>
+        <!-- STRIPE_LINK_HP_SHIKKARI -->
+        <!-- ↑ Stripe Payment Link 発行後、下の a タグの href を差し替え、btn-disabled を btn-primary に変更 -->
+        <a class="btn btn-disabled" href="#">クレジットカード決済（準備中）</a>
+        <a class="btn btn-ghost" href="index.html#contact" style="margin-top:10px">まずは相談する</a>
+      </div>
+
+    </div>
+
+    <!-- ===== 月額・サービス ===== -->
+    <div class="plans-label">
+      <span class="kicker">— Monthly &amp; Services</span>
+      <h2>月額サポート・サービス</h2>
+    </div>
+    <div class="plan-grid">
+
+      <!-- ③ 月額更新サポート -->
+      <div class="plan">
+        <div class="plan-tag">◆ SUPPORT</div>
+        <h2>月額更新サポート</h2>
+        <p class="plan-desc">HP公開後の更新・修正をおまかせいただけるプランです（HP制作とセット）。</p>
+        <div class="price-row">
+          <div class="price">
+            <span class="pe">月額（毎月）</span>
+            <div><span class="yen">¥</span><span class="num">3,300</span><span class="unit">税込 / 月</span></div>
+          </div>
+        </div>
+        <ul class="feats">
+          <li>営業時間・メニュー等の更新代行</li>
+          <li>軽微な修正・文言変更</li>
+          <li>いつでも解約OK（縛りなし）</li>
+        </ul>
+        <!-- STRIPE_LINK_KOSHIN -->
+        <!-- ↑ Stripe Payment Link 発行後、下の a タグの href を差し替え、btn-disabled を btn-primary に変更 -->
+        <a class="btn btn-disabled" href="#">クレジットカード決済（準備中）</a>
+        <a class="btn btn-ghost" href="index.html#contact" style="margin-top:10px">まずは相談する</a>
+      </div>
+
+      <!-- ④ 所見メーカー -->
+      <div class="plan">
+        <div class="plan-tag">◆ FOR TEACHERS</div>
+        <h2>所見メーカー</h2>
+        <p class="plan-desc">先生の所見作成をAIでサポートするWebサービスです。</p>
+        <div class="price-row">
+          <div class="price">
+            <span class="pe">月額（毎月）</span>
+            <div><span class="yen">¥</span><span class="num">1,980</span><span class="unit">税込 / 月</span></div>
+          </div>
+        </div>
+        <div class="beta-note">
+          6月は<strong>無料β版</strong>として公開中。7月から有料化予定です。
+        </div>
+        <ul class="feats">
+          <li>所見文の作成をAIがサポート</li>
+          <li>月額制・いつでも解約OK</li>
+        </ul>
+        <!-- STRIPE_LINK_SHOKEN -->
+        <!-- ↑ Stripe Payment Link 発行後、下の a タグの href を差し替え、btn-disabled を btn-primary に変更 -->
+        <a class="btn btn-disabled" href="#">クレジットカード決済（準備中・7月開始）</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============= PAYMENT INFO ============= -->
+<section class="payment">
+  <div class="wrap">
+    <div class="payment-card">
+      <h3>お支払いについて</h3>
+      <p>クレジットカード決済（Stripe）に対応予定です。Visa / Mastercard / JCB / American Express 等がご利用いただけます。</p>
+      <p>決済の準備が整うまでは、お問い合わせフォームよりご連絡ください。銀行振込等で個別にご案内します。</p>
+      <p>特定商取引法に基づく表記は <a href="tokushoho.html" style="text-decoration:underline">こちら</a> をご覧ください。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============= OTHER SERVICES ============= -->
+<section class="others">
+  <div class="wrap">
+    <div class="others-card">
+      <h3>AI活用の個別相談</h3>
+      <p>AI活用の個別相談は、ココナラ・ストアカにて販売しています。</p>
+      <div class="ext-links">
+        <!-- 必要に応じて実URLに差し替え -->
+        <a class="btn btn-ghost" href="https://coconala.com/" target="_blank" rel="noopener">ココナラで見る →</a>
+        <a class="btn btn-ghost" href="https://www.street-academy.com/" target="_blank" rel="noopener">ストアカで見る →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============= FOOTER ============= -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-links">
+      <a href="index.html">トップ</a>
+      <a href="tokushoho.html">特定商取引法に基づく表記</a>
+      <a href="index.html#contact">お問い合わせ</a>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 夢進堂 ALL RIGHTS RESERVED.</div>
+      <div>AI × TIME × LIFE</div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
